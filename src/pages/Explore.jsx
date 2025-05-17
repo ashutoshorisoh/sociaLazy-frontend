@@ -89,10 +89,8 @@ const Explore = () => {
 
             try {
                 const response = await posts.search(searchQuery);
-                console.log('Search response:', response);
                 setSearchResults(response.data);
             } catch (err) {
-                console.error('Search error:', err);
                 setError('Failed to fetch search results');
             } finally {
                 setIsLoading(false);
@@ -108,7 +106,6 @@ const Explore = () => {
             setLoading(true);
             setError(null);
             const response = await posts.getAll();
-            console.log('Explore tweets response:', response);
             if (response && response.data && response.data.posts) {
                 setTweets(response.data.posts);
             } else {
@@ -134,7 +131,7 @@ const Explore = () => {
     };
 
     const handleComment = (tweetId) => {
-        console.log('Comment on tweet:', tweetId);
+        // Comment functionality to be implemented
     };
 
     const trendingPosts = [

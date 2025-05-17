@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Layout from '../components/Layout';
 import Sidebar from '../components/Sidebar';
@@ -204,6 +204,7 @@ const Notifications = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const navigate = useNavigate();
 
     const fetchNotifications = async (page) => {
         try {
@@ -250,6 +251,25 @@ const Notifications = () => {
 
     const handlePageChange = (newPage) => {
         setCurrentPage(newPage);
+    };
+
+    const handleNotificationClick = async (notification) => {
+        try {
+            // Mark notification as read if it's unread
+            if (!notification.read) {
+                await notificationService.markNotificationAsRead(notification._id);
+                setNotifications(notifications.map(n =>
+                    n._id === notification._id ? { ...n, read: true } : n
+                ));
+            }
+            
+            // Navigate to the post using the post._id
+            if (notification.post && notification.post._id) {
+                navigate(`/post/${notification.post._id}`);
+            }
+        } catch (err) {
+            console.error('Failed to handle notification click:', err);
+        }
     };
 
     const trendingPosts = [
@@ -342,6 +362,7 @@ const Notifications = () => {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.3 }}
+                                onClick={() => handleNotificationClick(notification)}
                             >
                                 <NotificationHeader>
                                     <Avatar>
@@ -361,7 +382,10 @@ const Notifications = () => {
                                         </Timestamp>
                                     </NotificationContent>
                                     {!notification.read && (
-                                        <ReadStatusToggle onClick={(e) => handleMarkAsRead(notification._id, e)}>
+                                        <ReadStatusToggle onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleMarkAsRead(notification._id, e);
+                                        }}>
                                             Mark as Read
                                         </ReadStatusToggle>
                                     )}

@@ -111,6 +111,7 @@ const ModalContent = styled(motion.div)`
   @media (max-width: 768px) {
     top: 40%;
     max-height: 70vh;
+
   }
 `;
 
@@ -250,9 +251,11 @@ const Sidebar = () => {
     useEffect(() => {
         const fetchUnreadCount = async () => {
             try {
-                const data = await notificationService.getNotifications(1);
-                const unread = data.notifications.filter(n => !n.read).length;
-                setUnreadCount(unread);
+                const response = await notificationService.getNotifications(1);
+                if (response && response.data && response.data.notifications) {
+                    const unread = response.data.notifications.filter(n => !n.read).length;
+                    setUnreadCount(unread);
+                }
             } catch (error) {
                 console.error('Failed to fetch unread notifications:', error);
             }
@@ -325,6 +328,7 @@ const Sidebar = () => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 className="hidden md:flex flex-col w-64 p-6"
+                style={{ display: window.innerWidth <= 768 ? 'none' : undefined }}
             >
                 <nav className="space-y-2">
                     {navItems.map((item, index) => (
@@ -351,7 +355,7 @@ const Sidebar = () => {
 
             {/* Mobile Drawer */}
             <AnimatePresence>
-                {isDrawerOpen && (
+                {isDrawerOpen && window.innerWidth > 768 && (
                     <>
                         <DrawerOverlay
                             initial={{ opacity: 0 }}

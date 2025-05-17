@@ -13,6 +13,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider as CustomThemeProvider, useTheme } from './context/ThemeContext';
 import { lightTheme, darkTheme } from './styles/theme';
 import styled from 'styled-components';
+import TweetCard from './components/TweetCard';
+import SinglePost from './pages/SinglePost';
 
 const GlobalStyle = createGlobalStyle`
   * {
@@ -159,6 +161,14 @@ const AppRoutes = () => {
                             element={
                                 <PrivateRoute>
                                     <Notifications />
+                                </PrivateRoute>
+                            }
+                        />
+                        <Route
+                            path="/post/:postId"
+                            element={
+                                <PrivateRoute>
+                                    <SinglePost />
                                 </PrivateRoute>
                             }
                         />

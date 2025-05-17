@@ -127,17 +127,19 @@ const CommentSection = ({ postId, comments: initialComments = [], onCommentAdded
 
     return (
         <div className="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
-            <form onSubmit={handleSubmitComment} className="mb-4">
+            <form onSubmit={handleSubmitComment} className="mb-4" onClick={e => e.stopPropagation()}>
                 <div className="flex gap-2">
                     <CommentInput
                         type="text"
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
                         placeholder="Write a comment..."
+                        onClick={e => e.stopPropagation()}
                     />
                     <CommentButton
                         type="submit"
                         disabled={isSubmitting || !newComment.trim()}
+                        onClick={e => e.stopPropagation()}
                     >
                         {isSubmitting ? 'Posting...' : 'Post'}
                     </CommentButton>

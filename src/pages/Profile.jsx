@@ -156,7 +156,6 @@ const Profile = () => {
             try {
                 setLoading(true);
                 setError(null);
-                console.log('Fetching profile for userId:', idToFetch);
 
                 let response;
                 if (isOwnProfile) {
@@ -173,19 +172,12 @@ const Profile = () => {
                     }
                 }
 
-                console.log('User response:', response);
                 if (!response.data || !response.data.user) {
                     throw new Error('Invalid response format');
                 }
                 setProfile(response.data.user);
                 setUserTweets(response.data.posts || []);
             } catch (error) {
-                console.error('Error fetching user:', {
-                    message: error.message,
-                    response: error.response?.data,
-                    status: error.response?.status,
-                    userId: idToFetch
-                });
                 if (error.response?.status === 401) {
                     navigate('/login');
                 } else {
@@ -231,27 +223,13 @@ const Profile = () => {
         }
     };
 
-    const handleLike = async (tweetId) => {
-        try {
-            await posts.like(tweetId);
-            // Refresh user data after liking
-            const response = isOwnProfile
-                ? await auth.getCurrentUserProfile()
-                : await users.getProfile(idToFetch);
-            setUserTweets(response.data.posts || []);
-        } catch (error) {
-            console.error('Error liking tweet:', error);
-            setError('Failed to like tweet');
-        }
-    };
-
     const handleComment = (tweetId) => {
-        console.log('Comment on tweet:', tweetId);
+        // Comment functionality to be implemented
     };
 
     const handleNewTweet = async ({ content, image }) => {
         try {
-            await posts.create(content, image); // Actually create the post
+            await posts.create(content, image);
             const response = isOwnProfile
                 ? await auth.getCurrentUserProfile()
                 : await users.getProfile(idToFetch);
@@ -392,8 +370,6 @@ const Profile = () => {
                         <TweetCard
                             key={tweet._id}
                             tweet={tweet}
-                            onLike={handleLike}
-                            onComment={handleComment}
                             hideFollowButton={true}
                         />
                     ))}

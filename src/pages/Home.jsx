@@ -36,14 +36,12 @@ const Home = () => {
             setLoading(true);
             setError(null);
             const response = await posts.getAll();
-            console.log('Home tweets response:', response);
             if (response && response.data && response.data.posts) {
                 setTweets(response.data.posts);
             } else {
                 setTweets([]);
             }
         } catch (error) {
-            console.error('Error fetching tweets:', error);
             setError('Failed to load tweets. Please try again later.');
             setTweets([]);
         } finally {
@@ -56,13 +54,11 @@ const Home = () => {
             await posts.like(tweetId);
             fetchTweets(); // Refresh tweets after liking
         } catch (error) {
-            console.error('Error liking tweet:', error);
             setError('Failed to like tweet. Please try again.');
         }
     };
 
     const handleComment = (tweetId) => {
-        console.log('Comment on tweet:', tweetId);
     };
 
     const handleNewTweet = async ({ content, image }) => {
@@ -70,7 +66,6 @@ const Home = () => {
           await posts.create(content, image); // This sends the new post to the backend
           await fetchTweets(); // Refresh the feed
         } catch (error) {
-          console.error('Error creating tweet:', error);
           setError('Failed to create tweet. Please try again.');
         }
       };

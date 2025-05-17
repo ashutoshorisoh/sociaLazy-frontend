@@ -1,8 +1,6 @@
 import axios from 'axios';
 
-// const API_URL = import.meta.env.VITE_API_URL;
-const API_URL = 'https://socialazy-backend.onrender.com/api';
-console.log('API URL:', API_URL); // Debug log
+const API_URL = import.meta.env.VITE_API_URL;
 
 const api = axios.create({
     baseURL: API_URL,
@@ -14,12 +12,6 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
     (config) => {
-        console.log('Request:', {
-            url: config.url,
-            method: config.method,
-            data: config.data,
-            headers: config.headers
-        });
         const token = localStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
@@ -27,7 +19,6 @@ api.interceptors.request.use(
         return config;
     },
     (error) => {
-        console.error('Request Error:', error);
         return Promise.reject(error);
     }
 );
@@ -35,20 +26,9 @@ api.interceptors.request.use(
 // Response interceptor
 api.interceptors.response.use(
     (response) => {
-        console.log('Response:', response.data);
         return response;
     },
     (error) => {
-        // Log the complete error response
-        console.error('Complete Error Response:', error.response);
-        console.error('Error Data:', error.response?.data);
-        console.error('Error Array:', error.response?.data?.errors);
-        if (error.response?.data?.errors?.length > 0) {
-            console.error('First Error:', error.response.data.errors[0]);
-        }
-        console.error('Error Status:', error.response?.status);
-        console.error('Error Headers:', error.response?.headers);
-
         return Promise.reject(error);
     }
 );
