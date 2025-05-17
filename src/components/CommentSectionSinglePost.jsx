@@ -1,45 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatBubbleLeftIcon, HeartIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
-import { posts } from '../services/api';
 import styled from 'styled-components';
-
-const CommentInput = styled.input`
-    flex: 1;
-    border-radius: 9999px;
-    border: 1px solid ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
-    padding: 0.5rem 1rem;
-    background: ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'white'};
-    color: ${({ theme }) => theme.colors.text};
-    
-    &:focus {
-        outline: none;
-        border-color: ${({ theme }) => theme.colors.primary};
-    }
-    
-    &::placeholder {
-        color: ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'};
-    }
-`;
-
-const CommentButton = styled.button`
-    border-radius: 9999px;
-    background: ${({ theme }) => theme.colors.primary};
-    color: white;
-    padding: 0.5rem 1rem;
-    transition: ${({ theme }) => theme.transitions.default};
-    
-    &:hover {
-        background: ${({ theme }) => theme.colors.secondary};
-    }
-    
-    &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-`;
 
 const CommentCard = styled(motion.div)`
     margin-bottom: 0.75rem;
@@ -82,70 +46,11 @@ const LikeButton = styled.button`
     }
 `;
 
-const CommentSection = ({ postId, comments: initialComments = [], onCommentAdded }) => {
-    const [comments, setComments] = useState(Array.isArray(initialComments) ? initialComments : []);
-    const [newComment, setNewComment] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
+const CommentSectionSinglePost = ({ postId, comments = [], onLikeComment }) => {
     const currentUserId = localStorage.getItem('userId');
-
-    const handleSubmitComment = async (e) => {
-        e.preventDefault();
-        if (!newComment.trim() || isSubmitting) return;
-
-        try {
-            setIsSubmitting(true);
-            const response = await posts.addComment(postId, newComment);
-            // Refresh the post to get updated comments
-            const postResponse = await posts.getPostComments(postId);
-            setComments(postResponse.data || []);
-            setNewComment('');
-            if (onCommentAdded) {
-                onCommentAdded(response.data);
-            }
-        } catch (error) {
-            console.error('Error adding comment:', error);
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleLikeComment = async (commentId) => {
-        try {
-            const response = await posts.likeComment(commentId);
-            // Update the specific comment in the comments array
-            setComments(prevComments =>
-                prevComments.map(comment =>
-                    comment._id === commentId
-                        ? { ...comment, likes: response.data.likes }
-                        : comment
-                )
-            );
-        } catch (error) {
-            console.error('Error liking comment:', error);
-        }
-    };
 
     return (
         <div className="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
-            <form onSubmit={handleSubmitComment} className="mb-4" onClick={e => e.stopPropagation()}>
-                <div className="flex gap-2">
-                    <CommentInput
-                        type="text"
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        placeholder="Write a comment..."
-                        onClick={e => e.stopPropagation()}
-                    />
-                    <CommentButton
-                        type="submit"
-                        disabled={isSubmitting || !newComment.trim()}
-                        onClick={e => e.stopPropagation()}
-                    >
-                        {isSubmitting ? 'Posting...' : 'Post'}
-                    </CommentButton>
-                </div>
-            </form>
-
             <AnimatePresence>
                 {Array.isArray(comments) && comments.map((comment) => (
                     <CommentCard
@@ -178,10 +83,13 @@ const CommentSection = ({ postId, comments: initialComments = [], onCommentAdded
                                 <CommentContent>{comment.content}</CommentContent>
                                 <div className="mt-2 flex items-center gap-4">
                                     <LikeButton
-                                        onClick={e => {
-                                            e.stopPropagation();
-                                            handleLikeComment(comment._id);
-                                        }}
+                                        onClick={() => {
+
+
+                                            onLikeComment && onLikeComment(comment._id)
+                                        }
+
+                                        }
                                     >
                                         {comment.likes?.includes(currentUserId) ? (
                                             <HeartSolidIcon className="h-5 w-5 text-red-500" />
@@ -196,8 +104,11 @@ const CommentSection = ({ postId, comments: initialComments = [], onCommentAdded
                     </CommentCard>
                 ))}
             </AnimatePresence>
+            {comments.length === 0 && (
+                <div className="text-gray-500 text-center py-4">No comments yet. Be the first to comment!</div>
+            )}
         </div>
     );
 };
 
-export default CommentSection; 
+export default CommentSectionSinglePost; 

@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import Layout from '../components/Layout';
 import Sidebar from '../components/Sidebar';
 import TrendingPosts from '../components/TrendingPosts';
-import TweetCard from '../components/TweetCard';
+import CardSinglePost from '../components/CardSinglePost';
 import { posts } from '../services/api';
 
 const PostContainer = styled.div`
@@ -164,12 +164,11 @@ const SinglePost = () => {
                     </svg>
                     Back
                 </BackButton>
-                <TweetCard
+                <CardSinglePost
                     tweet={post}
                     onLike={handleLike}
                     onComment={handleComment}
-                    showComments={true}
-                    isSinglePost={true}
+                 
                 />
             </PostContainer>
         </Layout>

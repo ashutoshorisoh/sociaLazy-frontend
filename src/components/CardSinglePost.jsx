@@ -5,7 +5,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { HeartIcon, ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import { posts, users } from '../services/api';
-import CommentSection from './CommentSection';
+import CommentSectionSinglePost from './CommentSectionSinglePost';
 import styled from 'styled-components';
 import { useRecoilState } from 'recoil';
 import { followState } from '../context/followState';
@@ -100,11 +100,10 @@ const FollowButton = styled.button`
   }
 `;
 
-const TweetCard = ({ tweet, hideFollowButton = false, showComments = false, isSinglePost = false }) => {
+const CardSinglePost = ({ tweet, hideFollowButton = false }) => {
     const navigate = useNavigate();
     const [isLiked, setIsLiked] = useState(false);
     const [likesCount, setLikesCount] = useState(0);
-    const [isCommentsVisible, setIsCommentsVisible] = useState(isSinglePost ? true : showComments);
     const [comments, setComments] = useState([]);
     const [isLoadingComments, setIsLoadingComments] = useState(false);
     const [isLoadingFollow, setIsLoadingFollow] = useState(false);
@@ -112,84 +111,63 @@ const TweetCard = ({ tweet, hideFollowButton = false, showComments = false, isSi
     const [showHeartAnimation, setShowHeartAnimation] = useState(false);
     const [followStateValue, setFollowState] = useRecoilState(followState);
     const currentUserId = localStorage.getItem('userId');
-    const isOwnTweet = tweet.user._id === currentUserId;
+    const isOwnTweet = tweet && tweet.user._id === currentUserId;
     const lastTapTime = useRef(0);
 
-    const isFollowing = followStateValue[tweet.user._id] || false;
-    const isMobileOrTablet = typeof window !== 'undefined' && window.innerWidth <= 1024;
+    const isFollowing = tweet ? (followStateValue[tweet.user._id] || false) : false;
 
     useEffect(() => {
-        if (tweet.likes) {
+        if (tweet && tweet.likes) {
             setIsLiked(tweet.likes.includes(currentUserId));
             setLikesCount(tweet.likes.length);
         }
-    }, [tweet.likes, currentUserId]);
+    }, [tweet, currentUserId]);
 
-    // Fetch comments on mount if single post page
     useEffect(() => {
-        if (isSinglePost) {
-            setIsCommentsVisible(true);
-            fetchComments();
-        }
-        // eslint-disable-next-line
-    }, [isSinglePost, tweet._id]);
-
-    const fetchComments = async () => {
-        setIsLoadingComments(true);
-        try {
-            const response = await posts.getPostComments(tweet._id);
-            setComments(response.data || []);
-        } catch (error) {
-            console.error('Failed to fetch comments:', error);
-        } finally {
-            setIsLoadingComments(false);
-        }
-    };
+        const fetchComments = async () => {
+            if (tweet && tweet._id) {
+                setIsLoadingComments(true);
+                try {
+                    console.log('Fetching comments for', tweet._id);
+                    const response = await posts.getPostComments(tweet._id);
+                    setComments(response.data || []);
+                } catch (err) {
+                    setComments([]);
+                } finally {
+                    setIsLoadingComments(false);
+                }
+            }
+        };
+        fetchComments();
+    }, [tweet]);
 
     const handleLike = useCallback(async (e) => {
         if (e) {
             e.preventDefault();
             e.stopPropagation();
         }
-
-        // Prevent multiple requests
-        if (isLiking) {
-            console.log('Already processing like request, ignoring');
-            return;
-        }
-
+        if (isLiking) return;
         try {
-            console.log('Starting like request for tweet:', tweet._id);
             setIsLiking(true);
-            
-            const response = await axios.put(`${import.meta.env.VITE_API_URL}/posts/like/${tweet._id}`, {}, {
+            const response = await axios.put(`http://localhost:5001/api/posts/like/${tweet._id}`, {}, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
-
-            // Only update state if the request was successful
             if (response.status === 200) {
-                console.log('Like response:', response.data, Date.now());
                 setIsLiked(!isLiked);
                 setLikesCount(prev => isLiked ? prev - 1 : prev + 1);
             }
         } catch (error) {
-            console.error('Error liking tweet:', error);
-            // If we get a rate limit error, show a message to the user
-            if (error.response?.status === 429) {
-                console.log('Rate limit reached, please wait a moment before trying again');
-            }
+            // Silent error handling
         } finally {
-            // Add a small delay before allowing another like request
-            setTimeout(() => {
-                setIsLiking(false);
-            }, 1000);
+            setTimeout(() => setIsLiking(false), 1000);
         }
-    }, [tweet._id, isLiked, isLiking]);
+    }, [tweet, isLiked, isLiking]);
 
     const handleDoubleTap = useCallback((e) => {
+        // Don't call preventDefault on touch events
         const now = Date.now();
         const DOUBLE_TAP_DELAY = 300;
         if (now - lastTapTime.current < DOUBLE_TAP_DELAY) {
@@ -199,19 +177,14 @@ const TweetCard = ({ tweet, hideFollowButton = false, showComments = false, isSi
                 setTimeout(() => setShowHeartAnimation(false), 1000);
             }
             lastTapTime.current = 0;
-            // Only navigate on double tap for mobile/tablet
-            if (isMobileOrTablet) {
-                navigate(`/post/${tweet._id}`);
-            }
         } else {
             lastTapTime.current = now;
         }
-    }, [isLiked, isLiking, handleLike, isMobileOrTablet, tweet._id]);
+    }, [isLiked, isLiking, handleLike]);
 
     const handleFollowToggle = async (e) => {
         e.stopPropagation();
         if (isOwnTweet) return;
-        
         try {
             setIsLoadingFollow(true);
             if (isFollowing) {
@@ -219,7 +192,6 @@ const TweetCard = ({ tweet, hideFollowButton = false, showComments = false, isSi
             } else {
                 await users.follow(tweet.user._id);
             }
-            
             setFollowState(prev => ({
                 ...prev,
                 [tweet.user._id]: !isFollowing
@@ -229,15 +201,6 @@ const TweetCard = ({ tweet, hideFollowButton = false, showComments = false, isSi
         } finally {
             setIsLoadingFollow(false);
         }
-    };
-
-    const handleCommentClick = async (e) => {
-        e.stopPropagation();
-        if (isSinglePost) return; // Don't toggle on single post page
-        if (!isCommentsVisible) {
-            await fetchComments();
-        }
-        setIsCommentsVisible(!isCommentsVisible);
     };
 
     const handleAddComment = async (content) => {
@@ -251,11 +214,17 @@ const TweetCard = ({ tweet, hideFollowButton = false, showComments = false, isSi
                     _id: localStorage.getItem('userId') || '',
                 };
             }
-            if (isSinglePost) {
-                // Re-fetch all comments for single post page
-                await fetchComments();
-            } else {
-                setComments(prev => [...prev, newComment]);
+            // Always re-fetch comments after adding
+            if (tweet && tweet._id) {
+                setIsLoadingComments(true);
+                try {
+                    const res = await posts.getPostComments(tweet._id);
+                    setComments(res.data || []);
+                } catch (err) {
+                    setComments([]);
+                } finally {
+                    setIsLoadingComments(false);
+                }
             }
         } catch (error) {
             // Silent error handling
@@ -277,20 +246,15 @@ const TweetCard = ({ tweet, hideFollowButton = false, showComments = false, isSi
         }
     };
 
-    const handleTweetClick = (e) => {
-        if (!isMobileOrTablet) {
-            navigate(`/post/${tweet._id}`);
-        }
-    };
+    if (!tweet || !tweet._id) return null;
 
     return (
         <TweetContainer
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            onClick={handleTweetClick}
             onTouchStart={handleDoubleTap}
-            style={{ cursor: isSinglePost ? 'default' : 'pointer' }}
+            style={{ cursor:'default' }}
         >
             <AnimatePresence>
                 {showHeartAnimation && (
@@ -371,26 +335,23 @@ const TweetCard = ({ tweet, hideFollowButton = false, showComments = false, isSi
                             <span>{likesCount}</span>
                         </ActionButton>
                         <ActionButton
-                            onClick={handleCommentClick}
                             color="#3B82F6"
                         >
                             <ChatBubbleLeftIcon className="h-5 w-5" />
                             <span>{tweet.comments.length}</span>
                         </ActionButton>
                     </div>
-                    {isCommentsVisible && (
-                        <CommentSection
-                            postId={tweet._id}
-                            comments={comments}
-                            onAddComment={handleAddComment}
-                            onLikeComment={handleLikeComment}
-                            isLoading={isLoadingComments}
-                        />
-                    )}
+                    <CommentSectionSinglePost
+                        postId={tweet._id}
+                        comments={comments}
+                        onAddComment={handleAddComment}
+                        onLikeComment={handleLikeComment}
+                        isLoading={isLoadingComments}
+                    />
                 </div>
             </div>
         </TweetContainer>
     );
 };
 
-export default TweetCard; 
+export default CardSinglePost; 
