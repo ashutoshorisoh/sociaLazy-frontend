@@ -149,7 +149,7 @@ const CardSinglePost = ({ tweet, hideFollowButton = false }) => {
         if (isLiking) return;
         try {
             setIsLiking(true);
-            const response = await axios.put(`http://localhost:5001/api/posts/like/${tweet._id}`, {}, {
+            const response = await axios.put(`${import.meta.env.VITE_API_URL}/posts/like/${tweet._id}`, {}, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
