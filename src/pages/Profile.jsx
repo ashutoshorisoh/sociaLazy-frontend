@@ -10,8 +10,9 @@ import { motion } from 'framer-motion';
 import CreateTweet from '../components/CreateTweet';
 import { useRecoilState } from 'recoil';
 import { followState } from '../context/followState';
-import { ShareIcon } from '@heroicons/react/24/outline';
+import { ShareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
+import DeleteConfirmationOverlay from '../components/DeleteConfirmationOverlay';
 
 const ProfileContainer = styled.div`
   display: flex;
@@ -59,6 +60,18 @@ const UserActionsRow = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
   margin-bottom: ${({ theme }) => theme.spacing.sm};
+  flex-wrap: wrap;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    gap: ${({ theme }) => theme.spacing.sm};
+  }
+`;
+
+const ActionButtonsRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.md};
+  margin-top: ${({ theme }) => theme.spacing.sm};
   flex-wrap: wrap;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
@@ -242,11 +255,132 @@ const ShareMessage = styled.span`
   }
 `;
 
+const DangerZone = styled.div`
+  margin-top: ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.spacing.lg};
+  border: 1px solid #EF4444;
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  background: ${({ theme }) => theme.mode === 'dark' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)'};
+`;
+
+const DangerTitle = styled.h3`
+  color: #EF4444;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
+`;
+
+const DangerText = styled.p`
+  color: ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)'};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+  font-size: 0.9rem;
+`;
+
+const DeleteAccountButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  background: #EF4444;
+  color: white;
+  border: none;
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #DC2626;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const DeleteButton = styled.button`
+  color: ${({ theme }) => theme.colors.textSecondary};
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  transition: ${({ theme }) => theme.transitions.default};
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  justify-content: center;
+
+  svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  &:hover {
+    color: #EF4444;
+  }
+`;
+
+const DeleteConfirmation = styled.div`
+  background-color: ${props => props.theme.mode === 'dark' ? 'rgba(0, 0, 0, 0.9)' : 'rgba(255, 255, 255, 0.95)'};
+  padding: 1.5rem;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
+  margin-top: ${({ theme }) => theme.spacing.md};
+`;
+
+const DeleteTitle = styled.h2`
+  color: ${props => props.theme.text};
+  margin-bottom: 0.75rem;
+  font-size: 1.25rem;
+`;
+
+const DeleteMessage = styled.p`
+  color: ${props => props.theme.textSecondary};
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+`;
+
+const Button = styled.button`
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-size: 0.875rem;
+
+  &.cancel {
+    background-color: ${props => props.theme.backgroundSecondary};
+    color: ${props => props.theme.text};
+    &:hover {
+      background-color: ${props => props.theme.backgroundHover};
+    }
+  }
+
+  &.delete {
+    background-color: #dc2626;
+    color: white;
+    &:hover {
+      background-color: #b91c1c;
+    }
+  }
+`;
+
 const Profile = () => {
     const { userId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, logout } = useAuth();
     const loggedInUserId = localStorage.getItem('userId');
     const isOwnProfile = userId === 'me' || !userId;
     const idToFetch = isOwnProfile ? loggedInUserId : userId;
@@ -257,6 +391,8 @@ const Profile = () => {
     const [isLoadingFollow, setIsLoadingFollow] = useState(false);
     const [followStateValue, setFollowState] = useRecoilState(followState);
     const [showShareMessage, setShowShareMessage] = useState(false);
+    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const isFollowing = profile ? followStateValue[profile._id] || false : false;
 
@@ -357,6 +493,20 @@ const Profile = () => {
         }
     };
 
+    const handleDeleteAccount = async () => {
+        try {
+            setIsDeleting(true);
+            await users.deleteAccount(profile.username);
+            logout();
+            navigate('/');
+        } catch (error) {
+            console.error('Error deleting account:', error);
+        } finally {
+            setIsDeleting(false);
+            setShowDeleteConfirmation(false);
+        }
+    };
+
     const trendingPosts = [
         {
             id: 1,
@@ -446,35 +596,60 @@ const Profile = () => {
                         <UserInfoContainer>
                             <UserActionsRow>
                                 <Username>{profile?.username}</Username>
-                                {!isOwnProfile && (
-                                    <FollowButton
-                                        isFollowing={isFollowing}
-                                        onClick={handleFollowToggle}
-                                        disabled={isLoadingFollow}
-                                    >
-                                        {isLoadingFollow ? (
-                                            <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                        ) : isFollowing ? (
-                                            'Unfollow'
-                                        ) : (
-                                            'Follow'
-                                        )}
-                                    </FollowButton>
-                                )}
-                                <ShareButton
-                                    onClick={() => {
-                                        const shareUrl = `${window.location.origin}/profile/${isOwnProfile ? 'me' : profile?._id}`;
-                                        navigator.clipboard.writeText(shareUrl);
-                                        setShowShareMessage(true);
-                                        setTimeout(() => setShowShareMessage(false), 2000);
-                                    }}
-                                    type="button"
-                                >
-                                    <ShareIcon className="h-5 w-5" />
-                                    <ShareMessage show={showShareMessage}>Profile link copied!</ShareMessage>
-                                </ShareButton>
                             </UserActionsRow>
                             <Bio>{profile?.bio || 'No bio yet'}</Bio>
+                            {showDeleteConfirmation ? (
+                                <DeleteConfirmation>
+                                    <DeleteTitle>Delete Account</DeleteTitle>
+                                    <DeleteMessage>Are you sure you want to delete your account? This will permanently delete all your posts, comments, and other data. This action cannot be undone.</DeleteMessage>
+                                    <ButtonGroup>
+                                        <Button className="cancel" onClick={() => setShowDeleteConfirmation(false)}>
+                                            Cancel
+                                        </Button>
+                                        <Button className="delete" onClick={handleDeleteAccount} disabled={isDeleting}>
+                                            {isDeleting ? 'Deleting...' : 'Delete'}
+                                        </Button>
+                                    </ButtonGroup>
+                                </DeleteConfirmation>
+                            ) : (
+                                <ActionButtonsRow>
+                                    {!isOwnProfile && (
+                                        <FollowButton
+                                            isFollowing={isFollowing}
+                                            onClick={handleFollowToggle}
+                                            disabled={isLoadingFollow}
+                                        >
+                                            {isLoadingFollow ? (
+                                                <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                            ) : isFollowing ? (
+                                                'Unfollow'
+                                            ) : (
+                                                'Follow'
+                                            )}
+                                        </FollowButton>
+                                    )}
+                                    <ShareButton
+                                        onClick={() => {
+                                            const shareUrl = `${window.location.origin}/profile/${isOwnProfile ? 'me' : profile?._id}`;
+                                            navigator.clipboard.writeText(shareUrl);
+                                            setShowShareMessage(true);
+                                            setTimeout(() => setShowShareMessage(false), 2000);
+                                        }}
+                                        type="button"
+                                    >
+                                        <ShareIcon className="h-5 w-5" />
+                                        <ShareMessage show={showShareMessage}>Profile link copied!</ShareMessage>
+                                    </ShareButton>
+                                    {isOwnProfile && (
+                                        <DeleteButton
+                                            onClick={() => setShowDeleteConfirmation(true)}
+                                            disabled={isDeleting}
+                                        >
+                                            <TrashIcon className="w-5 h-5" />
+                                        </DeleteButton>
+                                    )}
+                                </ActionButtonsRow>
+                            )}
                         </UserInfoContainer>
                     </ProfileInfo>
                     <Stats>

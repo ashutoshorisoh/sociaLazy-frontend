@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
-import { HeartIcon, ChatBubbleLeftIcon, ShareIcon } from '@heroicons/react/24/outline';
+import { HeartIcon, ChatBubbleLeftIcon, ShareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import { posts, users } from '../services/api';
 import CommentSection from './CommentSection';
@@ -11,6 +11,7 @@ import { useRecoilState } from 'recoil';
 import { followState } from '../context/followState';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import DeleteConfirmationOverlay from './DeleteConfirmationOverlay';
 
 const HeartOverlay = styled(motion.div)`
   position: absolute;
@@ -32,6 +33,7 @@ const TweetContainer = styled(motion.div)`
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   margin-bottom: ${({ theme }) => theme.spacing.md};
   cursor: pointer;
+  overflow: hidden;
 
   &:hover {
     background: ${({ theme }) => theme.mode === 'dark' ? '#2D2D2D' : '#F0F0F0'};
@@ -120,7 +122,6 @@ const ShareMessage = styled.span`
   color: #10B981;
   font-size: 0.875rem;
   margin-left: ${({ theme }) => theme.spacing.xs};
-  opacity: ${({ show }) => show ? 1 : 0};
   transition: opacity 0.2s ease;
 `;
 
@@ -170,7 +171,59 @@ const Overlay = styled(motion.div)`
   z-index: 999;
 `;
 
-const TweetCard = memo(({ tweet, hideFollowButton = false, showComments = false, isSinglePost = false }) => {
+const DeleteConfirmation = styled.div`
+  background-color: ${props => props.theme.mode === 'dark' ? 'rgba(0, 0, 0, 0.9)' : 'rgba(255, 255, 255, 0.95)'};
+  padding: 1.5rem;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
+`;
+
+const DeleteTitle = styled.h2`
+  color: ${props => props.theme.text};
+  margin-bottom: 0.75rem;
+  font-size: 1.25rem;
+`;
+
+const DeleteMessage = styled.p`
+  color: ${props => props.theme.textSecondary};
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+`;
+
+const Button = styled.button`
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-size: 0.875rem;
+
+  &.cancel {
+    background-color: ${props => props.theme.backgroundSecondary};
+    color: ${props => props.theme.text};
+    &:hover {
+      background-color: ${props => props.theme.backgroundHover};
+    }
+  }
+
+  &.delete {
+    background-color: #dc2626;
+    color: white;
+    &:hover {
+      background-color: #b91c1c;
+    }
+  }
+`;
+
+const TweetCard = memo(({ tweet, hideFollowButton = false, showComments = false, isSinglePost = false, onDelete }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { isAuthenticated } = useAuth();
@@ -187,6 +240,8 @@ const TweetCard = memo(({ tweet, hideFollowButton = false, showComments = false,
     const isOwnTweet = tweet.user._id === currentUserId;
     const lastTapTime = useRef(0);
     const [showShareMessage, setShowShareMessage] = useState(false);
+    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const isFollowing = followStateValue[tweet.user._id] || false;
     const isMobileOrTablet = typeof window !== 'undefined' && window.innerWidth <= 1024;
@@ -368,6 +423,21 @@ const TweetCard = memo(({ tweet, hideFollowButton = false, showComments = false,
         }
     }, [currentUserId]);
 
+    const handleDelete = async () => {
+        try {
+            setIsDeleting(true);
+            await posts.delete(tweet._id);
+            if (onDelete) {
+                onDelete(tweet._id);
+            }
+            setShowDeleteConfirmation(false);
+        } catch (error) {
+            console.error('Error deleting post:', error);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     return (
         <>
             <TweetContainer
@@ -433,52 +503,85 @@ const TweetCard = memo(({ tweet, hideFollowButton = false, showComments = false,
                                 {formatDistanceToNow(new Date(tweet.createdAt), { addSuffix: true })}
                             </Timestamp>
                         </div>
-                        <Content>{tweet.content}</Content>
-                        {tweet.image && (
-                            <div className="mt-2 rounded-lg overflow-hidden">
-                                <img
-                                    src={tweet.image}
-                                    alt="Post attachment"
-                                    className="w-full h-auto object-cover"
-                                />
-                            </div>
-                        )}
-                        <div className="flex items-center space-x-6 mt-3">
-                            <ActionButton
-                                onClick={handleLike}
-                                color="#EF4444"
-                                type="button"
-                            >
-                                {isLiked ? (
-                                    <HeartIconSolid className="h-5 w-5 text-red-500" />
-                                ) : (
-                                    <HeartIcon className="h-5 w-5" />
+                        {showDeleteConfirmation ? (
+                            <DeleteConfirmation>
+                                <DeleteTitle>Delete Post</DeleteTitle>
+                                <DeleteMessage>Are you sure you want to delete this post? This action cannot be undone.</DeleteMessage>
+                                <ButtonGroup>
+                                    <Button className="cancel" onClick={() => setShowDeleteConfirmation(false)}>
+                                        Cancel
+                                    </Button>
+                                    <Button className="delete" onClick={handleDelete}>
+                                        Delete
+                                    </Button>
+                                </ButtonGroup>
+                            </DeleteConfirmation>
+                        ) : (
+                            <>
+                                <Content>{tweet.content}</Content>
+                                {tweet.image && (
+                                    <div className="mt-2 rounded-lg overflow-hidden">
+                                        <img
+                                            src={tweet.image}
+                                            alt="Post attachment"
+                                            className="w-full h-auto object-cover"
+                                        />
+                                    </div>
                                 )}
-                                <span>{likesCount}</span>
-                            </ActionButton>
-                            <ActionButton
-                                onClick={handleCommentClick}
-                                color="#3B82F6"
-                            >
-                                <ChatBubbleLeftIcon className="h-5 w-5" />
-                                <span>{tweet.comments.length}</span>
-                            </ActionButton>
-                            <ShareButton
-                                onClick={handleShare}
-                                type="button"
-                            >
-                                <ShareIcon className="h-5 w-5" />
-                                <ShareMessage show={showShareMessage}>Post link copied!</ShareMessage>
-                            </ShareButton>
-                        </div>
-                        {isCommentsVisible && (
-                            <CommentSection
-                                postId={tweet._id}
-                                comments={comments}
-                                onAddComment={handleAddComment}
-                                onLikeComment={handleLikeComment}
-                                isLoading={isLoadingComments}
-                            />
+                                <div className="flex items-center mt-3">
+                                    <div className="flex items-center space-x-6">
+                                        <ActionButton
+                                            onClick={handleLike}
+                                            color="#EF4444"
+                                            type="button"
+                                        >
+                                            {isLiked ? (
+                                                <HeartIconSolid className="h-5 w-5 text-red-500" />
+                                            ) : (
+                                                <HeartIcon className="h-5 w-5" />
+                                            )}
+                                            <span>{likesCount}</span>
+                                        </ActionButton>
+                                        <ActionButton
+                                            onClick={handleCommentClick}
+                                            color="#3B82F6"
+                                        >
+                                            <ChatBubbleLeftIcon className="h-5 w-5" />
+                                            <span>{tweet.comments.length}</span>
+                                        </ActionButton>
+                                        <ShareButton
+                                            onClick={handleShare}
+                                            type="button"
+                                        >
+                                            <ShareIcon className="h-5 w-5" />
+                                            {showShareMessage && (
+                                                <ShareMessage>Post link copied!</ShareMessage>
+                                            )}
+                                        </ShareButton>
+                                        {isOwnTweet && (
+                                            <ActionButton
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setShowDeleteConfirmation(true);
+                                                }}
+                                                color="#EF4444"
+                                                disabled={isDeleting}
+                                            >
+                                                <TrashIcon className="w-5 h-5" />
+                                            </ActionButton>
+                                        )}
+                                    </div>
+                                </div>
+                                {isCommentsVisible && (
+                                    <CommentSection
+                                        postId={tweet._id}
+                                        comments={comments}
+                                        onAddComment={handleAddComment}
+                                        onLikeComment={handleLikeComment}
+                                        isLoading={isLoadingComments}
+                                    />
+                                )}
+                            </>
                         )}
                     </div>
                 </div>

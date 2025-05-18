@@ -157,6 +157,12 @@ const ErrorMessage = styled.div`
   margin-top: ${({ theme }) => theme.spacing.sm};
 `;
 
+const FieldError = styled.div`
+  color: #dc2626;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+`;
+
 const Logo = styled.div`
   display: flex;
   justify-content: center;
@@ -176,6 +182,7 @@ const Register = () => {
         confirmPassword: '',
     });
     const [error, setError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const { register } = useAuth();
@@ -185,11 +192,19 @@ const Register = () => {
             ...formData,
             [e.target.name]: e.target.value,
         });
+        // Clear field-specific error when user starts typing
+        if (fieldErrors[e.target.name]) {
+            setFieldErrors(prev => ({
+                ...prev,
+                [e.target.name]: null
+            }));
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setFieldErrors({});
 
         if (formData.password !== formData.confirmPassword) {
             setError('Passwords do not match');
@@ -199,11 +214,44 @@ const Register = () => {
         setLoading(true);
 
         try {
-            await register(formData);
+            console.log('Attempting registration with data:', { ...formData, password: '[REDACTED]' });
+            const response = await register(formData);
+            console.log('Registration successful:', response);
             navigate('/');
         } catch (error) {
-            console.error('Registration error:', error);
-            setError(error.response?.data?.message || 'Failed to register. Please try again.');
+            console.error('Registration error details:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status,
+                headers: error.response?.headers
+            });
+            
+            // Handle network errors
+            if (!error.response) {
+                setError('Network error. Please check your internet connection.');
+                return;
+            }
+
+            // Handle validation errors from backend
+            if (error.response?.data?.errors) {
+                const errors = error.response.data.errors;
+                console.log('Validation errors:', errors);
+                const fieldErrorMap = {};
+                errors.forEach(err => {
+                    fieldErrorMap[err.field] = err.message;
+                });
+                setFieldErrors(fieldErrorMap);
+            } 
+            // Handle general error message from backend
+            else if (error.response?.data?.message) {
+                console.log('Backend error message:', error.response.data.message);
+                setError(error.response.data.message);
+            }
+            // Handle other types of errors
+            else {
+                console.log('Unknown error type:', error);
+                setError('Failed to register. Please try again.');
+            }
         } finally {
             setLoading(false);
         }
@@ -222,7 +270,7 @@ const Register = () => {
                 <Title>Create Account</Title>
                 <Subtitle>Join sociaLazy and start sharing</Subtitle>
 
-                <Form onSubmit={handleSubmit}>
+                <Form onSubmit={handleSubmit} noValidate>
                     <InputGroup>
                         <Label htmlFor="username">Username</Label>
                         <Input
@@ -233,7 +281,9 @@ const Register = () => {
                             value={formData.username}
                             onChange={handleChange}
                             placeholder="Choose a username"
+                            className={fieldErrors.username ? 'error' : ''}
                         />
+                        {fieldErrors.username && <FieldError>{fieldErrors.username}</FieldError>}
                     </InputGroup>
 
                     <InputGroup>
@@ -246,7 +296,9 @@ const Register = () => {
                             value={formData.email}
                             onChange={handleChange}
                             placeholder="Enter your email"
+                            className={fieldErrors.email ? 'error' : ''}
                         />
+                        {fieldErrors.email && <FieldError>{fieldErrors.email}</FieldError>}
                     </InputGroup>
 
                     <InputGroup>
@@ -259,7 +311,9 @@ const Register = () => {
                             value={formData.password}
                             onChange={handleChange}
                             placeholder="Create a password"
+                            className={fieldErrors.password ? 'error' : ''}
                         />
+                        {fieldErrors.password && <FieldError>{fieldErrors.password}</FieldError>}
                     </InputGroup>
 
                     <InputGroup>

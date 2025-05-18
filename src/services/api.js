@@ -26,9 +26,36 @@ api.interceptors.request.use(
 // Response interceptor
 api.interceptors.response.use(
     (response) => {
+        console.log('API Response:', {
+            url: response.config.url,
+            method: response.config.method,
+            status: response.status,
+            data: response.data
+        });
         return response;
     },
     (error) => {
+        console.error('API Error:', {
+            url: error.config?.url,
+            method: error.config?.method,
+            status: error.response?.status,
+            data: error.response?.data,
+            message: error.message
+        });
+
+        // For registration errors, ensure we're passing the full error object
+        if (error.config?.url?.includes('/auth/register')) {
+            return Promise.reject({
+                ...error,
+                response: {
+                    ...error.response,
+                    data: error.response?.data || {
+                        message: 'Registration failed. Please try again.'
+                    }
+                }
+            });
+        }
+
         return Promise.reject(error);
     }
 );
@@ -49,6 +76,7 @@ export const users = {
     checkFollowing: async (userId) => {
         return await api.get(`/auth/following/${userId}`);
     },
+    deleteAccount: (username) => api.delete(`/users/username/${username}`),
 };
 
 export const posts = {

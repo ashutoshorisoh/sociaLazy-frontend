@@ -1,12 +1,13 @@
 import React, { useState, useCallback, memo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChatBubbleLeftIcon, HeartIcon } from '@heroicons/react/24/outline';
+import { ChatBubbleLeftIcon, HeartIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { posts } from '../services/api';
 import styled from 'styled-components';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import DeleteConfirmationOverlay from './DeleteConfirmationOverlay';
 
 const CommentInput = styled.input`
     width: 100%;
@@ -85,10 +86,25 @@ const LikeButton = styled.button`
     }
 `;
 
-const CommentSection = memo(({ postId, comments: initialComments = [], onCommentAdded }) => {
+const DeleteButton = styled.button`
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'};
+    transition: ${({ theme }) => theme.transitions.default};
+    
+    &:hover {
+        color: #EF4444;
+    }
+`;
+
+const CommentSection = memo(({ postId, comments: initialComments = [], onCommentAdded, onCommentDeleted }) => {
     const [comments, setComments] = useState(Array.isArray(initialComments) ? initialComments : []);
     const [newComment, setNewComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+    const [commentToDelete, setCommentToDelete] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const currentUserId = localStorage.getItem('userId');
     const { isAuthenticated } = useAuth();
     const navigate = useNavigate();
@@ -144,6 +160,33 @@ const CommentSection = memo(({ postId, comments: initialComments = [], onComment
         e.stopPropagation();
     }, []);
 
+    const handleDeleteComment = useCallback(async (commentId) => {
+        if (!isAuthenticated) {
+            navigate('/login', { state: { from: location.pathname } });
+            return;
+        }
+        setCommentToDelete(commentId);
+        setShowDeleteConfirmation(true);
+    }, [isAuthenticated, navigate, location.pathname]);
+
+    const confirmDelete = async () => {
+        if (!commentToDelete) return;
+        try {
+            setIsDeleting(true);
+            await posts.delete(commentToDelete);
+            setComments(prevComments => prevComments.filter(comment => comment._id !== commentToDelete));
+            if (onCommentDeleted) {
+                onCommentDeleted(commentToDelete);
+            }
+        } catch (error) {
+            console.error('Error deleting comment:', error);
+        } finally {
+            setIsDeleting(false);
+            setShowDeleteConfirmation(false);
+            setCommentToDelete(null);
+        }
+    };
+
     return (
         <div className="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
             <form onSubmit={handleSubmitComment} className="mb-4" onClick={handleCommentClick}>
@@ -188,14 +231,24 @@ const CommentSection = memo(({ postId, comments: initialComments = [], onComment
                                 </div>
                             )}
                             <div className="flex-1">
-                                <div className="flex items-center space-x-2">
-                                    <CommentUsername>{comment.user?.username || 'User'}</CommentUsername>
-                                </div>
-                                <div>
-                                    {/* <span className="text-gray-500">·</span> */}
-                                    <CommentTimestamp>
-                                        {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
-                                    </CommentTimestamp>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                        <CommentUsername>{comment.user?.username || 'User'}</CommentUsername>
+                                        <CommentTimestamp>
+                                            {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                                        </CommentTimestamp>
+                                    </div>
+                                    {comment.user?._id === currentUserId && (
+                                        <DeleteButton
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteComment(comment._id);
+                                            }}
+                                            disabled={isDeleting}
+                                        >
+                                            <TrashIcon className="w-4 h-4" />
+                                        </DeleteButton>
+                                    )}
                                 </div>
                                 <CommentContent>{comment.content}</CommentContent>
                                 <div className="mt-2 flex items-center gap-4">
@@ -218,6 +271,17 @@ const CommentSection = memo(({ postId, comments: initialComments = [], onComment
                     </CommentCard>
                 ))}
             </AnimatePresence>
+
+            <DeleteConfirmationOverlay
+                isOpen={showDeleteConfirmation}
+                onClose={() => {
+                    setShowDeleteConfirmation(false);
+                    setCommentToDelete(null);
+                }}
+                onConfirm={confirmDelete}
+                title="Delete Comment"
+                message="Are you sure you want to delete this comment? This action cannot be undone."
+            />
         </div>
     );
 });
