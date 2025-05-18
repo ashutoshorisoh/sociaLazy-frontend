@@ -39,7 +39,16 @@ const Home = () => {
             setError(null);
             const response = await posts.getAll();
             if (response && response.data && response.data.posts) {
-                setTweets(response.data.posts);
+                // Sort posts to ensure Harkirat's post is at the top
+                const sortedPosts = response.data.posts.sort((a, b) => {
+                    // If post is by Harkirat, it should be at the top
+                    if (a.user.username === 'harkirat') return -1;
+                    if (b.user.username === 'harkirat') return 1;
+                    
+                    // For other posts, sort by date (newest first)
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                });
+                setTweets(sortedPosts);
             } else {
                 setTweets([]);
             }
