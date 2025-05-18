@@ -1,12 +1,14 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL;
+// Get the API URL from environment variables or use a default
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+// Create axios instance with proper configuration
 const api = axios.create({
     baseURL: API_URL,
     headers: {
         'Content-Type': 'application/json',
-    },
+    }
 });
 
 // Request interceptor
@@ -16,9 +18,11 @@ api.interceptors.request.use(
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+        console.log('Making request to:', config.url);
         return config;
     },
     (error) => {
+        console.error('Request error:', error);
         return Promise.reject(error);
     }
 );
@@ -42,27 +46,19 @@ api.interceptors.response.use(
             data: error.response?.data,
             message: error.message
         });
-
-        // For registration errors, ensure we're passing the full error object
-        if (error.config?.url?.includes('/auth/register')) {
-            return Promise.reject({
-                ...error,
-                response: {
-                    ...error.response,
-                    data: error.response?.data || {
-                        message: 'Registration failed. Please try again.'
-                    }
-                }
-            });
-        }
-
         return Promise.reject(error);
     }
 );
 
 export const auth = {
-    login: (credentials) => api.post('/auth/login', credentials),
-    register: (userData) => api.post('/auth/register', userData),
+    login: (credentials) => {
+        console.log('Attempting login with:', { ...credentials, password: '[REDACTED]' });
+        return api.post('/auth/login', credentials);
+    },
+    register: (userData) => {
+        console.log('Attempting registration with:', { ...userData, password: '[REDACTED]' });
+        return api.post('/auth/register', userData);
+    },
     getCurrentUser: () => api.get('/auth/me'),
     getCurrentUserProfile: (page = 1, limit = 10) => api.get(`/auth/me?page=${page}&limit=${limit}`),
 };

@@ -205,55 +205,38 @@ const Register = () => {
         e.preventDefault();
         setError('');
         setFieldErrors({});
-
-        if (formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
-            return;
-        }
-
         setLoading(true);
 
         try {
-            console.log('Attempting registration with data:', { ...formData, password: '[REDACTED]' });
-            const response = await register(formData);
-            console.log('Registration successful:', response);
+            console.log('Starting registration process...');
+            await register(formData);
+            console.log('Registration successful, redirecting...');
             navigate('/');
         } catch (error) {
-            console.error('Registration error details:', {
-                message: error.message,
-                response: error.response?.data,
-                status: error.response?.status,
-                headers: error.response?.headers
-            });
+            console.error('Registration error:', error);
+            setLoading(false);
             
-            // Handle network errors
             if (!error.response) {
-                setError('Network error. Please check your internet connection.');
+                setError('Network error. Please check your connection.');
                 return;
             }
 
-            // Handle validation errors from backend
-            if (error.response?.data?.errors) {
-                const errors = error.response.data.errors;
-                console.log('Validation errors:', errors);
-                const fieldErrorMap = {};
-                errors.forEach(err => {
-                    fieldErrorMap[err.field] = err.message;
+            const { data } = error.response;
+            
+            if (data.errors) {
+                const newFieldErrors = {};
+                data.errors.forEach(err => {
+                    if (err.field) {
+                        newFieldErrors[err.field] = err.message;
+                    }
                 });
-                setFieldErrors(fieldErrorMap);
-            } 
-            // Handle general error message from backend
-            else if (error.response?.data?.message) {
-                console.log('Backend error message:', error.response.data.message);
-                setError(error.response.data.message);
+                setFieldErrors(newFieldErrors);
+                if (Object.keys(newFieldErrors).length === 0) {
+                    setError(data.message || 'Registration failed. Please try again.');
+                }
+            } else {
+                setError(data.message || 'Registration failed. Please try again.');
             }
-            // Handle other types of errors
-            else {
-                console.log('Unknown error type:', error);
-                setError('Failed to register. Please try again.');
-            }
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -270,7 +253,8 @@ const Register = () => {
                 <Title>Create Account</Title>
                 <Subtitle>Join sociaLazy and start sharing</Subtitle>
 
-                <Form onSubmit={handleSubmit} noValidate>
+                <Form onSubmit={handleSubmit}>
+                    {error && <ErrorMessage>{error}</ErrorMessage>}
                     <InputGroup>
                         <Label htmlFor="username">Username</Label>
                         <Input
@@ -329,18 +313,12 @@ const Register = () => {
                         />
                     </InputGroup>
 
-                    {error && <ErrorMessage>{error}</ErrorMessage>}
-
                     <Button type="submit" disabled={loading}>
-                        {loading ? (
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
-                        ) : (
-                            'Create Account'
-                        )}
+                        {loading ? 'Creating Account...' : 'Create Account'}
                     </Button>
 
                     <AuthText>
-                        Already have an account? <LoginLink to="/login">Sign in</LoginLink>
+                        Already have an account? <LoginLink to="/login">Log in</LoginLink>
                     </AuthText>
                 </Form>
             </RegisterCard>
