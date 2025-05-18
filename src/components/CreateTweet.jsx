@@ -182,7 +182,7 @@ const CreateTweet = memo(({ onSubmit }) => {
                         />
                         {showLoginMessage && (
                             <LoginMessage>
-                                To post your tweet, please <a href="/login" onClick={handleLoginClick}>login</a>
+                                To post your thoughts, please <a href="/login" onClick={handleLoginClick}>login</a>
                             </LoginMessage>
                         )}
                     </div>
