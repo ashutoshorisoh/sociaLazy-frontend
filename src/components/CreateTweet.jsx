@@ -1,6 +1,8 @@
 import React, { useState, useCallback, memo } from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const MAX_LENGTH = 280;
 
@@ -105,24 +107,62 @@ const CharCount = styled.span`
   font-size: 0.875rem;
 `;
 
+const LoginMessage = styled.div`
+  color: ${({ theme }) => theme.mode === 'dark' ? '#FFFFFF' : '#000000'};
+  font-size: 0.875rem;
+  text-align: center;
+  padding: ${({ theme }) => theme.spacing.sm};
+  background: ${({ theme }) => theme.mode === 'dark' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)'};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  margin-top: ${({ theme }) => theme.spacing.sm};
+
+  a {
+    color: ${({ theme }) => theme.mode === 'dark' ? '#FFFFFF' : '#000000'};
+    text-decoration: underline;
+    font-weight: 600;
+    margin-left: 4px;
+    text-transform: uppercase;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+`;
+
 const CreateTweet = memo(({ onSubmit }) => {
     const [content, setContent] = useState('');
+    const [showLoginMessage, setShowLoginMessage] = useState(false);
     const username = localStorage.getItem('username');
+    const { isAuthenticated } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
 
     const handleContentChange = useCallback((e) => {
         if (e.target.value.length <= MAX_LENGTH) {
             setContent(e.target.value);
+            if (!isAuthenticated && e.target.value.trim()) {
+                setShowLoginMessage(true);
+            } else {
+                setShowLoginMessage(false);
+            }
         }
-    }, []);
+    }, [isAuthenticated]);
 
     const handleSubmit = useCallback((e) => {
         e.preventDefault();
-        if (!content.trim()) return;
+        if (!content.trim() || !isAuthenticated) return;
+        
         if (typeof onSubmit === 'function') {
             onSubmit({ content });
         }
         setContent('');
-    }, [content, onSubmit]);
+        setShowLoginMessage(false);
+    }, [content, onSubmit, isAuthenticated]);
+
+    const handleLoginClick = useCallback((e) => {
+        e.preventDefault();
+        navigate('/login', { state: { from: location.pathname } });
+    }, [navigate, location.pathname]);
 
     return (
         <Card initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
@@ -140,6 +180,11 @@ const CreateTweet = memo(({ onSubmit }) => {
                             rows={3}
                             aria-label="Tweet content"
                         />
+                        {showLoginMessage && (
+                            <LoginMessage>
+                                To post your tweet, please <a href="/login" onClick={handleLoginClick}>login</a>
+                            </LoginMessage>
+                        )}
                     </div>
                 </div>
 
@@ -153,7 +198,7 @@ const CreateTweet = memo(({ onSubmit }) => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         type="submit"
-                        disabled={!content.trim()}
+                        disabled={!content.trim() || !isAuthenticated}
                     >
                         Post
                     </SubmitButton>
