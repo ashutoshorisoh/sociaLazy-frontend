@@ -8,6 +8,7 @@ import { notifications } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { notificationService } from '../services/notificationService';
 import { formatDistanceToNow } from 'date-fns';
+import { useAuth } from '../context/AuthContext';
 
 const NotificationsContainer = styled.div`
   width: 100%;
@@ -196,6 +197,28 @@ const ReadStatusToggle = styled.button`
   }
 `;
 
+const LoginMessage = styled.div`
+  color: ${({ theme }) => theme.mode === 'dark' ? '#FFFFFF' : '#000000'};
+  font-size: 0.875rem;
+  text-align: center;
+  padding: ${({ theme }) => theme.spacing.sm};
+//   background: ${({ theme }) => theme.mode === 'dark' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)'};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  margin-top: ${({ theme }) => theme.spacing.sm};
+
+  a {
+    color: ${({ theme }) => theme.mode === 'dark' ? '#FFFFFF' : '#000000'};
+    text-decoration: underline;
+    font-weight: 600;
+    margin-left: 4px;
+    text-transform: uppercase;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+`;
+
 const Notifications = () => {
     const [notifications, setNotifications] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
@@ -203,8 +226,19 @@ const Notifications = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
+
+    const handleLoginClick = (e) => {
+        e.preventDefault();
+        navigate('/login', { state: { from: location.pathname } });
+    };
 
     const fetchNotifications = async (page) => {
+        if (!isAuthenticated) {
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
             const data = await notificationService.getNotifications(page);
@@ -222,7 +256,7 @@ const Notifications = () => {
 
     useEffect(() => {
         fetchNotifications(currentPage);
-    }, [currentPage]);
+    }, [currentPage, isAuthenticated]);
 
     const handleMarkAsRead = async (notificationId, event) => {
         event.stopPropagation(); // Prevent card click event
@@ -317,6 +351,24 @@ const Notifications = () => {
                 <div className="flex justify-center items-center h-screen">
                     <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
                 </div>
+            </Layout>
+        );
+    }
+
+    if (!isAuthenticated) {
+        return (
+            <Layout
+                leftSidebar={<Sidebar title="Navigation" links={sidebarLinks} />}
+                rightSidebar={<TrendingPosts posts={trendingPosts} />}
+            >
+                <NotificationsContainer>
+                    <EmptyState>
+                        <EmptyStateTitle>Notifications</EmptyStateTitle>
+                        <LoginMessage>
+                            To view your notifications, please <a href="/login" onClick={handleLoginClick}>login</a>
+                        </LoginMessage>
+                    </EmptyState>
+                </NotificationsContainer>
             </Layout>
         );
     }

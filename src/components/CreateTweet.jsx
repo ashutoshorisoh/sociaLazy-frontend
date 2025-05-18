@@ -112,7 +112,7 @@ const LoginMessage = styled.div`
   font-size: 0.875rem;
   text-align: center;
   padding: ${({ theme }) => theme.spacing.sm};
-  background: ${({ theme }) => theme.mode === 'dark' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)'};
+  // background: ${({ theme }) => theme.mode === 'dark' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)'};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   margin-top: ${({ theme }) => theme.spacing.sm};
 
