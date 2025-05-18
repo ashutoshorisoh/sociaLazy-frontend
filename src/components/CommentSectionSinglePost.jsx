@@ -164,7 +164,7 @@ const CommentSectionSinglePost = memo(({ postId, comments = [], onLikeComment, o
                                     <CommentUsername>{comment.user?.username || 'User'}</CommentUsername>
                                 </div>
                                 <div>
-                                    <span className="text-gray-500">·</span>
+                                    {/* <span className="text-gray-500">·</span> */}
                                     <CommentTimestamp>
                                         {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                                     </CommentTimestamp>

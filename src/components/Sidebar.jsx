@@ -214,6 +214,15 @@ const MobileLogoutButton = styled.button`
   }
 `;
 
+const MobileLoginButton = styled(MobileLogoutButton)`
+  color: ${({ theme }) => theme.mode === 'dark' ? '#FF4B2B' : '#B91C1C'};
+  
+  &:hover {
+    opacity: 0.8;
+    background: ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,75,43,0.08)' : 'rgba(185,28,28,0.08)'};
+  }
+`;
+
 const SidebarTitle = styled.h1`
   font-size: 1.5rem;
   font-weight: 600;
@@ -263,15 +272,6 @@ const LoginButton = styled.button`
     background: ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,75,43,0.08)' : 'rgba(185,28,28,0.08)'};
     color: ${({ theme }) => theme.mode === 'dark' ? '#FF4B2B' : '#B91C1C'};
   }
-`;
-
-const MobileLoginButton = styled(LoginButton)`
-  flex-direction: column;
-  font-size: 0.75rem;
-  justify-content: center;
-  align-items: center;
-  padding: ${({ theme }) => theme.spacing.sm};
-  width: auto;
 `;
 
 const LoginIcon = (
