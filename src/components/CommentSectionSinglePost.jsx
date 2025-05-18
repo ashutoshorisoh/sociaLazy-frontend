@@ -52,11 +52,12 @@ const LikeButton = styled.button`
 const CommentForm = styled.form`
     margin-top: 1rem;
     display: flex;
+    flex-direction: column;
     gap: 0.5rem;
 `;
 
 const CommentInput = styled.input`
-    flex: 1;
+    width: 100%;
     border-radius: ${({ theme }) => theme.borderRadius.lg};
     border: 1px solid ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
     padding: 0.5rem 1rem;
@@ -74,6 +75,7 @@ const CommentInput = styled.input`
 `;
 
 const SubmitButton = styled.button`
+    align-self: flex-end;
     border-radius: ${({ theme }) => theme.borderRadius.lg};
     background: ${({ theme }) => theme.colors.primary};
     color: white;

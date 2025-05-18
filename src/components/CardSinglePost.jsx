@@ -349,7 +349,7 @@ const CardSinglePost = memo(({ tweet, hideFollowButton = false }) => {
                         )}
                     </div>
                     <div>
-                        <span className="text-gray-500">·</span>
+                        {/* <span className="text-gray-500">·</span> */}
                         <Timestamp>
                             {formatDistanceToNow(new Date(tweet.createdAt), { addSuffix: true })}
                         </Timestamp>

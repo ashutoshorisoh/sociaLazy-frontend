@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const CommentInput = styled.input`
-    flex: 1;
+    width: 100%;
     border-radius: ${({ theme }) => theme.borderRadius.lg};
     border: 1px solid ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
     padding: 0.5rem 1rem;
@@ -27,6 +27,7 @@ const CommentInput = styled.input`
 `;
 
 const CommentButton = styled.button`
+    align-self: flex-end;
     border-radius: ${({ theme }) => theme.borderRadius.lg};
     background: ${({ theme }) => theme.colors.primary};
     color: white;
@@ -146,7 +147,7 @@ const CommentSection = memo(({ postId, comments: initialComments = [], onComment
     return (
         <div className="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
             <form onSubmit={handleSubmitComment} className="mb-4" onClick={handleCommentClick}>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2">
                     <CommentInput
                         type="text"
                         value={newComment}

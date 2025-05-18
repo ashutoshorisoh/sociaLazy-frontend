@@ -59,6 +59,11 @@ const UserActionsRow = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
   margin-bottom: ${({ theme }) => theme.spacing.sm};
+  flex-wrap: wrap;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    gap: ${({ theme }) => theme.spacing.sm};
+  }
 `;
 
 const Avatar = styled.div`
@@ -187,10 +192,16 @@ const FollowButton = styled.button`
   background: ${({ theme, isFollowing }) => isFollowing ? 'transparent' : theme.colors.primary};
   color: ${({ theme, isFollowing }) => isFollowing ? theme.colors.primary : 'white'};
   border: 2px solid ${({ theme }) => theme.colors.primary};
+  white-space: nowrap;
   
   &:hover {
     background: ${({ theme, isFollowing }) => isFollowing ? 'rgba(59, 130, 246, 0.1)' : theme.colors.secondary};
     border-color: ${({ theme, isFollowing }) => isFollowing ? theme.colors.secondary : theme.colors.secondary};
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
+    font-size: 0.875rem;
   }
 `;
 
@@ -203,7 +214,15 @@ const ShareButton = styled.button`
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 1.1rem;
+  padding: 0.5rem;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  justify-content: center;
+
+  svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
 
   &:hover {
     color: #10B981;
@@ -216,6 +235,11 @@ const ShareMessage = styled.span`
   margin-left: ${({ theme }) => theme.spacing.xs};
   opacity: ${({ show }) => show ? 1 : 0};
   transition: opacity 0.2s ease;
+  white-space: nowrap;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    display: none;
+  }
 `;
 
 const Profile = () => {
