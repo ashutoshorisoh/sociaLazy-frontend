@@ -416,15 +416,15 @@ const Notifications = () => {
                             >
                                 <NotificationHeader>
                                     <Avatar>
-                                        {notification.sender.profilePicture ? (
-                                            <img src={notification.sender.profilePicture} alt={notification.sender.username} />
+                                        {notification.sender?.profilePicture ? (
+                                            <img src={notification.sender.profilePicture} alt={notification.sender?.username || 'User'} />
                                         ) : (
-                                            notification.sender.username?.charAt(0).toUpperCase() || 'U'
+                                            notification.sender?.username?.charAt(0).toUpperCase() || 'U'
                                         )}
                                     </Avatar>
                                     <NotificationContent className="notification-content">
-                                        <Username to={`/profile/${notification.sender._id}`}>
-                                            {notification.sender.username}
+                                        <Username to={`/profile/${notification.sender?._id || ''}`}>
+                                            {notification.sender?.username || 'Unknown User'}
                                         </Username>
                                         <NotificationText>{notification.content}</NotificationText>
                                         <Timestamp>
