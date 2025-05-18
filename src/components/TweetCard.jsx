@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
@@ -78,7 +78,7 @@ const FollowButton = styled.button`
   font-size: 0.95rem;
   font-weight: 500;
   border: none;
-  border-radius: 999px;
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
   background: ${({ theme, isFollowing }) => isFollowing ? theme.colors.secondary : theme.colors.primary};
   color: #fff;
   cursor: pointer;
@@ -100,7 +100,7 @@ const FollowButton = styled.button`
   }
 `;
 
-const TweetCard = ({ tweet, hideFollowButton = false, showComments = false, isSinglePost = false }) => {
+const TweetCard = memo(({ tweet, hideFollowButton = false, showComments = false, isSinglePost = false }) => {
     const navigate = useNavigate();
     const [isLiked, setIsLiked] = useState(false);
     const [likesCount, setLikesCount] = useState(0);
@@ -125,7 +125,6 @@ const TweetCard = ({ tweet, hideFollowButton = false, showComments = false, isSi
         }
     }, [tweet.likes, currentUserId]);
 
-    // Fetch comments on mount if single post page
     useEffect(() => {
         if (isSinglePost) {
             setIsCommentsVisible(true);
@@ -134,7 +133,7 @@ const TweetCard = ({ tweet, hideFollowButton = false, showComments = false, isSi
         // eslint-disable-next-line
     }, [isSinglePost, tweet._id]);
 
-    const fetchComments = async () => {
+    const fetchComments = useCallback(async () => {
         setIsLoadingComments(true);
         try {
             const response = await posts.getPostComments(tweet._id);
@@ -144,7 +143,7 @@ const TweetCard = ({ tweet, hideFollowButton = false, showComments = false, isSi
         } finally {
             setIsLoadingComments(false);
         }
-    };
+    }, [tweet._id]);
 
     const handleLike = useCallback(async (e) => {
         if (e) {
@@ -152,7 +151,6 @@ const TweetCard = ({ tweet, hideFollowButton = false, showComments = false, isSi
             e.stopPropagation();
         }
 
-        // Prevent multiple requests
         if (isLiking) {
             console.log('Already processing like request, ignoring');
             return;
@@ -169,7 +167,6 @@ const TweetCard = ({ tweet, hideFollowButton = false, showComments = false, isSi
                 }
             });
 
-            // Only update state if the request was successful
             if (response.status === 200) {
                 console.log('Like response:', response.data, Date.now());
                 setIsLiked(!isLiked);
@@ -177,12 +174,10 @@ const TweetCard = ({ tweet, hideFollowButton = false, showComments = false, isSi
             }
         } catch (error) {
             console.error('Error liking tweet:', error);
-            // If we get a rate limit error, show a message to the user
             if (error.response?.status === 429) {
                 console.log('Rate limit reached, please wait a moment before trying again');
             }
         } finally {
-            // Add a small delay before allowing another like request
             setTimeout(() => {
                 setIsLiking(false);
             }, 1000);
@@ -199,16 +194,15 @@ const TweetCard = ({ tweet, hideFollowButton = false, showComments = false, isSi
                 setTimeout(() => setShowHeartAnimation(false), 1000);
             }
             lastTapTime.current = 0;
-            // Only navigate on double tap for mobile/tablet
             if (isMobileOrTablet) {
                 navigate(`/post/${tweet._id}`);
             }
         } else {
             lastTapTime.current = now;
         }
-    }, [isLiked, isLiking, handleLike, isMobileOrTablet, tweet._id]);
+    }, [isLiked, isLiking, handleLike, isMobileOrTablet, tweet._id, navigate]);
 
-    const handleFollowToggle = async (e) => {
+    const handleFollowToggle = useCallback(async (e) => {
         e.stopPropagation();
         if (isOwnTweet) return;
         
@@ -229,18 +223,18 @@ const TweetCard = ({ tweet, hideFollowButton = false, showComments = false, isSi
         } finally {
             setIsLoadingFollow(false);
         }
-    };
+    }, [isOwnTweet, isFollowing, tweet.user._id, setFollowState]);
 
-    const handleCommentClick = async (e) => {
+    const handleCommentClick = useCallback(async (e) => {
         e.stopPropagation();
-        if (isSinglePost) return; // Don't toggle on single post page
+        if (isSinglePost) return;
         if (!isCommentsVisible) {
             await fetchComments();
         }
         setIsCommentsVisible(!isCommentsVisible);
-    };
+    }, [isSinglePost, isCommentsVisible, fetchComments]);
 
-    const handleAddComment = async (content) => {
+    const handleAddComment = useCallback(async (content) => {
         try {
             const response = await posts.addComment(tweet._id, content);
             let newComment = response.data;
@@ -248,40 +242,40 @@ const TweetCard = ({ tweet, hideFollowButton = false, showComments = false, isSi
                 newComment.user = {
                     username: localStorage.getItem('username') || 'You',
                     profilePicture: localStorage.getItem('profilePicture') || '',
-                    _id: localStorage.getItem('userId') || '',
                 };
             }
-            if (isSinglePost) {
-                // Re-fetch all comments for single post page
-                await fetchComments();
-            } else {
-                setComments(prev => [...prev, newComment]);
-            }
+            setComments(prev => [newComment, ...prev]);
         } catch (error) {
-            // Silent error handling
+            console.error('Error adding comment:', error);
         }
-    };
+    }, [tweet._id]);
 
-    const handleLikeComment = async (commentId) => {
+    const handleLikeComment = useCallback(async (commentId) => {
         try {
-            const response = await posts.likeComment(commentId);
-            setComments(prev =>
-                prev.map(comment =>
-                    comment._id === commentId
-                        ? { ...comment, likes: response.data.likes }
-                        : comment
-                )
-            );
+            await posts.likeComment(commentId);
+            setComments(prev => prev.map(comment => {
+                if (comment._id === commentId) {
+                    const isLiked = comment.likes.includes(currentUserId);
+                    return {
+                        ...comment,
+                        likes: isLiked
+                            ? comment.likes.filter(id => id !== currentUserId)
+                            : [...comment.likes, currentUserId]
+                    };
+                }
+                return comment;
+            }));
         } catch (error) {
-            // Silent error handling
+            console.error('Error liking comment:', error);
         }
-    };
+    }, [currentUserId]);
 
-    const handleTweetClick = (e) => {
-        if (!isMobileOrTablet) {
-            navigate(`/post/${tweet._id}`);
+    const handleTweetClick = useCallback((e) => {
+        if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') {
+            return;
         }
-    };
+        navigate(`/post/${tweet._id}`);
+    }, [navigate, tweet._id]);
 
     return (
         <TweetContainer
@@ -391,6 +385,6 @@ const TweetCard = ({ tweet, hideFollowButton = false, showComments = false, isSi
             </div>
         </TweetContainer>
     );
-};
+});
 
 export default TweetCard; 

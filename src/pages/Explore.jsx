@@ -12,12 +12,22 @@ import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 const ExploreContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.lg};
+  gap: ${({ theme }) => theme.spacing.md};
+  width: 100%;
+  padding: 0;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    gap: ${({ theme }) => theme.spacing.sm};
+  }
 `;
 
 const SearchContainer = styled.div`
   position: relative;
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    margin-bottom: ${({ theme }) => theme.spacing.xs};
+  }
 `;
 
 const SearchInput = styled.input`
@@ -30,6 +40,12 @@ const SearchInput = styled.input`
   backdrop-filter: blur(10px);
   color: ${({ theme }) => theme.colors.text};
   font-size: 1rem;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    padding: ${({ theme }) => theme.spacing.sm};
+    padding-left: 36px;
+    font-size: 0.875rem;
+  }
 
   &:focus {
     outline: none;

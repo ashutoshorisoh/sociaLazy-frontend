@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 
@@ -19,7 +19,7 @@ const Title = styled.h2`
 
 const QuoteCard = styled(motion.div)`
   padding: ${({ theme }) => theme.spacing.sm};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
   margin-bottom: ${({ theme }) => theme.spacing.sm};
   background: ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)'};
   border-left: 4px solid ${({ theme }) => theme.colors.primary};
@@ -46,22 +46,23 @@ const QuoteAuthor = styled.p`
 
 const TechTip = styled(QuoteCard)`
   border-left-color: ${({ theme }) => theme.colors.secondary};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
 `;
 
-const TrendingPosts = () => {
-    const quotes = [
+const TrendingPosts = memo(() => {
+    const quotes = useMemo(() => [
         {
             text: "The best way to predict the future is to implement it yourself.",
             author: "David Heinemeier Hansson"
         }
-    ];
+    ], []);
 
-    const techTips = [
+    const techTips = useMemo(() => [
         {
             text: "Remember to use semantic HTML elements for better accessibility and SEO.",
             author: "Web Development Tip"
         }
-    ];
+    ], []);
 
     return (
         <TrendingContainer>
@@ -98,6 +99,6 @@ const TrendingPosts = () => {
             </div>
         </TrendingContainer>
     );
-};
+});
 
 export default TrendingPosts; 

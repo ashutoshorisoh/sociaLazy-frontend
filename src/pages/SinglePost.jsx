@@ -8,13 +8,11 @@ import CardSinglePost from '../components/CardSinglePost';
 import { posts } from '../services/api';
 
 const PostContainer = styled.div`
-  max-width: 680px;
-  margin: 0 auto;
-  padding: ${({ theme }) => theme.spacing.lg};
   width: 100%;
+  padding: 0;
 
   @media (max-width: 768px) {
-    padding: ${({ theme }) => theme.spacing.md};
+    padding: 0;
   }
 `;
 

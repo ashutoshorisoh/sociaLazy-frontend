@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, memo } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from 'styled-components';
 import { createGlobalStyle } from 'styled-components';
@@ -24,7 +24,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   html {
-    scroll-behavior: smooth;
+    scroll-behavior: ${({ isProfileRoute }) => isProfileRoute ? 'auto' : 'smooth'};
   }
 
   body {
@@ -90,21 +90,21 @@ const AuthContent = styled.main`
   width: 100%;
 `;
 
-const PrivateRoute = ({ children }) => {
+const PrivateRoute = memo(({ children }) => {
     const { isAuthenticated } = useAuth();
     return isAuthenticated ? children : <Navigate to="/login" />;
-};
+});
 
-const AppRoutes = () => {
+const AppRoutes = memo(() => {
     const { isAuthenticated } = useAuth();
     const { isDarkMode } = useTheme();
     const location = useLocation();
-
     const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+    const isProfileRoute = location.pathname.startsWith('/profile');
 
     return (
         <ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
-            <GlobalStyle />
+            <GlobalStyle isProfileRoute={isProfileRoute} />
             {isAuthenticated && <Navigation />}
             {isAuthPage ? (
                 <AuthContent>
@@ -177,9 +177,9 @@ const AppRoutes = () => {
             )}
         </ThemeProvider>
     );
-};
+});
 
-const App = () => {
+const App = memo(() => {
     return (
         <CustomThemeProvider>
             <AuthProvider>
@@ -189,6 +189,6 @@ const App = () => {
             </AuthProvider>
         </CustomThemeProvider>
     );
-};
+});
 
 export default App; 

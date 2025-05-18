@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import ThemeToggle from './ThemeToggle';
@@ -27,16 +27,25 @@ const NavContainer = styled.div`
 `;
 
 const Logo = styled(Link)`
-  font-size: 1.75rem;
-  font-weight: 800;
-  color: ${({ theme }) => theme.colors.primary};
+  display: flex;
+  align-items: center;
   text-decoration: none;
   transition: ${({ theme }) => theme.transitions.default};
-  letter-spacing: -0.5px;
   
-  &:hover {
+  img {
+    height: 40px;
+    width: auto;
+    transition: transform 0.2s ease;
+  }
+  
+  &:hover img {
     transform: scale(1.05);
-    color: ${({ theme }) => theme.colors.secondary};
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    img {
+      height: 32px;
+    }
   }
 `;
 
@@ -94,58 +103,86 @@ const MenuButton = styled.button`
   }
 `;
 
-const Navigation = () => {
+const MobileControls = styled.div`
+  display: none;
+  align-items: center;
+  gap: 8px;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    display: flex;
+  }
+`;
+
+const DesktopThemeToggle = styled.div`
+  display: none;
+  margin-left: ${({ theme }) => theme.spacing.lg};
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
+    display: block;
+  }
+`;
+
+const Navigation = memo(() => {
   const location = useLocation();
   const { isDarkMode } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  const toggleMenu = useCallback(() => {
+    setIsMenuOpen(prev => !prev);
+  }, []);
+
+  const handleNavLinkClick = useCallback(() => {
+    setIsMenuOpen(false);
+  }, []);
 
   return (
     <Nav>
       <NavContainer>
         <Logo to="/">
-          sociaLazy
+          <img src="/socialazy-logo.svg" alt="sociaLazy" />
         </Logo>
-        <MenuButton onClick={toggleMenu}>
-          {isMenuOpen ? '✕' : '☰'}
-        </MenuButton>
+        <MobileControls>
+          <ThemeToggle />
+          <MenuButton onClick={toggleMenu}>
+            {isMenuOpen ? '✕' : '☰'}
+          </MenuButton>
+        </MobileControls>
         <NavLinks isOpen={isMenuOpen}>
           <NavLink
             to="/"
             active={location.pathname === '/' ? 1 : 0}
-            onClick={() => setIsMenuOpen(false)}
+            onClick={handleNavLinkClick}
           >
             Home
           </NavLink>
           <NavLink
             to="/explore"
             active={location.pathname === '/explore' ? 1 : 0}
-            onClick={() => setIsMenuOpen(false)}
+            onClick={handleNavLinkClick}
           >
             Explore
           </NavLink>
           <NavLink
             to="/notifications"
             active={location.pathname === '/notifications' ? 1 : 0}
-            onClick={() => setIsMenuOpen(false)}
+            onClick={handleNavLinkClick}
           >
             Notifications
           </NavLink>
           <NavLink
             to="/profile"
             active={location.pathname === '/profile' ? 1 : 0}
-            onClick={() => setIsMenuOpen(false)}
+            onClick={handleNavLinkClick}
           >
             Profile
           </NavLink>
-          <ThemeToggle />
+          <DesktopThemeToggle>
+            <ThemeToggle />
+          </DesktopThemeToggle>
         </NavLinks>
       </NavContainer>
     </Nav>
   );
-};
+});
 
 export default Navigation; 

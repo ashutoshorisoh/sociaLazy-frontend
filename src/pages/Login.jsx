@@ -139,6 +139,17 @@ const ErrorMessage = styled.div`
   margin-top: ${({ theme }) => theme.spacing.sm};
 `;
 
+const Logo = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
+  
+  img {
+    height: 60px;
+    width: auto;
+  }
+`;
+
 const Login = () => {
     const [formData, setFormData] = useState({
         identifier: '',
@@ -187,6 +198,9 @@ const Login = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
             >
+                <Logo>
+                    <img src="/socialazy-logo.svg" alt="sociaLazy" />
+                </Logo>
                 <Title>Welcome Back</Title>
                 <Subtitle>Sign in to continue to sociaLazy</Subtitle>
 

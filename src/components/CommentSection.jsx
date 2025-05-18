@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatBubbleLeftIcon, HeartIcon } from '@heroicons/react/24/outline';
@@ -8,7 +8,7 @@ import styled from 'styled-components';
 
 const CommentInput = styled.input`
     flex: 1;
-    border-radius: 9999px;
+    border-radius: ${({ theme }) => theme.borderRadius.lg};
     border: 1px solid ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
     padding: 0.5rem 1rem;
     background: ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'white'};
@@ -25,7 +25,7 @@ const CommentInput = styled.input`
 `;
 
 const CommentButton = styled.button`
-    border-radius: 9999px;
+    border-radius: ${({ theme }) => theme.borderRadius.lg};
     background: ${({ theme }) => theme.colors.primary};
     color: white;
     padding: 0.5rem 1rem;
@@ -43,7 +43,7 @@ const CommentButton = styled.button`
 
 const CommentCard = styled(motion.div)`
     margin-bottom: 0.75rem;
-    border-radius: 0.5rem;
+    border-radius: ${({ theme }) => theme.borderRadius.lg};
     padding: 0.75rem;
     background: ${({ theme }) => theme.mode === 'dark' ? '#252525' : '#FFFFFF'};
     border: 1px solid ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'};
@@ -82,20 +82,19 @@ const LikeButton = styled.button`
     }
 `;
 
-const CommentSection = ({ postId, comments: initialComments = [], onCommentAdded }) => {
+const CommentSection = memo(({ postId, comments: initialComments = [], onCommentAdded }) => {
     const [comments, setComments] = useState(Array.isArray(initialComments) ? initialComments : []);
     const [newComment, setNewComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const currentUserId = localStorage.getItem('userId');
 
-    const handleSubmitComment = async (e) => {
+    const handleSubmitComment = useCallback(async (e) => {
         e.preventDefault();
         if (!newComment.trim() || isSubmitting) return;
 
         try {
             setIsSubmitting(true);
             const response = await posts.addComment(postId, newComment);
-            // Refresh the post to get updated comments
             const postResponse = await posts.getPostComments(postId);
             setComments(postResponse.data || []);
             setNewComment('');
@@ -107,12 +106,11 @@ const CommentSection = ({ postId, comments: initialComments = [], onCommentAdded
         } finally {
             setIsSubmitting(false);
         }
-    };
+    }, [postId, newComment, isSubmitting, onCommentAdded]);
 
-    const handleLikeComment = async (commentId) => {
+    const handleLikeComment = useCallback(async (commentId) => {
         try {
             const response = await posts.likeComment(commentId);
-            // Update the specific comment in the comments array
             setComments(prevComments =>
                 prevComments.map(comment =>
                     comment._id === commentId
@@ -123,23 +121,31 @@ const CommentSection = ({ postId, comments: initialComments = [], onCommentAdded
         } catch (error) {
             console.error('Error liking comment:', error);
         }
-    };
+    }, []);
+
+    const handleCommentChange = useCallback((e) => {
+        setNewComment(e.target.value);
+    }, []);
+
+    const handleCommentClick = useCallback((e) => {
+        e.stopPropagation();
+    }, []);
 
     return (
         <div className="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
-            <form onSubmit={handleSubmitComment} className="mb-4" onClick={e => e.stopPropagation()}>
+            <form onSubmit={handleSubmitComment} className="mb-4" onClick={handleCommentClick}>
                 <div className="flex gap-2">
                     <CommentInput
                         type="text"
                         value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
+                        onChange={handleCommentChange}
                         placeholder="Write a comment..."
-                        onClick={e => e.stopPropagation()}
+                        onClick={handleCommentClick}
                     />
                     <CommentButton
                         type="submit"
                         disabled={isSubmitting || !newComment.trim()}
-                        onClick={e => e.stopPropagation()}
+                        onClick={handleCommentClick}
                     >
                         {isSubmitting ? 'Posting...' : 'Post'}
                     </CommentButton>
@@ -169,8 +175,11 @@ const CommentSection = ({ postId, comments: initialComments = [], onCommentAdded
                                 </div>
                             )}
                             <div className="flex-1">
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center space-x-2">
                                     <CommentUsername>{comment.user?.username || 'User'}</CommentUsername>
+                                </div>
+                                <div>
+                                    <span className="text-gray-500">·</span>
                                     <CommentTimestamp>
                                         {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                                     </CommentTimestamp>
@@ -198,6 +207,6 @@ const CommentSection = ({ postId, comments: initialComments = [], onCommentAdded
             </AnimatePresence>
         </div>
     );
-};
+});
 
 export default CommentSection; 

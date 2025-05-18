@@ -10,13 +10,11 @@ import { notificationService } from '../services/notificationService';
 import { formatDistanceToNow } from 'date-fns';
 
 const NotificationsContainer = styled.div`
-  max-width: 680px;
-  margin: 0 auto;
-  padding: ${({ theme }) => theme.spacing.lg};
   width: 100%;
+  padding: 0;
 
   @media (max-width: 768px) {
-    padding: ${({ theme }) => theme.spacing.md};
+    padding: 0;
   }
 `;
 

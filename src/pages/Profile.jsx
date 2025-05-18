@@ -15,6 +15,12 @@ const ProfileContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.lg};
+  width: 100%;
+  padding: 0;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    gap: ${({ theme }) => theme.spacing.md};
+  }
 `;
 
 const ProfileHeader = styled.div`
@@ -23,13 +29,35 @@ const ProfileHeader = styled.div`
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   padding: ${({ theme }) => theme.spacing.lg};
   border: 1px solid ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    padding: ${({ theme }) => theme.spacing.md};
+  }
 `;
 
 const ProfileInfo = styled.div`
   display: flex;
-  align-items: center;
   gap: ${({ theme }) => theme.spacing.lg};
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    gap: ${({ theme }) => theme.spacing.md};
+  }
+`;
+
+const UserInfoContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0; // Prevents flex item from overflowing
+`;
+
+const UserActionsRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.md};
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
 `;
 
 const Avatar = styled.div`
@@ -44,48 +72,77 @@ const Avatar = styled.div`
   font-weight: 600;
   color: ${({ theme }) => theme.colors.textSecondary};
   overflow: hidden;
+  flex-shrink: 0;
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
-`;
 
-const UserInfo = styled.div`
-  flex: 1;
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    width: 80px;
+    height: 80px;
+    font-size: 2rem;
+  }
 `;
 
 const Username = styled.h1`
   font-size: 1.5rem;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.text};
-  margin-bottom: ${({ theme }) => theme.spacing.xs};
+  margin: 0;
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    font-size: 1.25rem;
+  }
 `;
 
 const Bio = styled.p`
   color: ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'};
-  margin-bottom: ${({ theme }) => theme.spacing.md};
+  margin: ${({ theme }) => theme.spacing.sm} 0 0;
+  word-break: break-word;
+  line-height: 1.4;
 `;
 
 const Stats = styled.div`
   display: flex;
-  gap: ${({ theme }) => theme.spacing.lg};
+  margin-top: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.sm} 0;
+  border-top: 1px solid ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
 `;
 
 const Stat = styled.div`
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+  
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 70%;
+    width: 1px;
+    background-color: ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
+  }
 `;
 
 const StatValue = styled.div`
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 1.1rem;
+  font-weight: 700;
   color: ${({ theme }) => theme.colors.text};
+  margin-bottom: 4px;
 `;
 
 const StatLabel = styled.div`
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'};
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 `;
 
 const LoadingContainer = styled.div`
@@ -150,6 +207,10 @@ const Profile = () => {
     const [followStateValue, setFollowState] = useRecoilState(followState);
 
     const isFollowing = profile ? followStateValue[profile._id] || false : false;
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -325,8 +386,8 @@ const Profile = () => {
                                 profile?.username?.charAt(0).toUpperCase() || 'U'
                             )}
                         </Avatar>
-                        <UserInfo>
-                            <div className="flex items-center justify-between">
+                        <UserInfoContainer>
+                            <UserActionsRow>
                                 <Username>{profile?.username}</Username>
                                 {!isOwnProfile && (
                                     <FollowButton
@@ -343,24 +404,24 @@ const Profile = () => {
                                         )}
                                     </FollowButton>
                                 )}
-                            </div>
+                            </UserActionsRow>
                             <Bio>{profile?.bio || 'No bio yet'}</Bio>
-                            <Stats>
-                                <Stat>
-                                    <StatValue>{userTweets.length} posts</StatValue>
-                                    <StatLabel>Posts</StatLabel>
-                                </Stat>
-                                <Stat>
-                                    <StatValue>{profile?.followers?.length || 0} followers</StatValue>
-                                    <StatLabel>Followers</StatLabel>
-                                </Stat>
-                                <Stat>
-                                    <StatValue>{profile?.following?.length || 0} following</StatValue>
-                                    <StatLabel>Following</StatLabel>
-                                </Stat>
-                            </Stats>
-                        </UserInfo>
+                        </UserInfoContainer>
                     </ProfileInfo>
+                    <Stats>
+                        <Stat>
+                            <StatValue>{userTweets.length}</StatValue>
+                            <StatLabel>Posts</StatLabel>
+                        </Stat>
+                        <Stat>
+                            <StatValue>{profile?.followers?.length || 0}</StatValue>
+                            <StatLabel>Followers</StatLabel>
+                        </Stat>
+                        <Stat>
+                            <StatValue>{profile?.following?.length || 0}</StatValue>
+                            <StatLabel>Following</StatLabel>
+                        </Stat>
+                    </Stats>
                 </ProfileHeader>
                 <div className="space-y-4">
                     {isOwnProfile && (
@@ -379,4 +440,4 @@ const Profile = () => {
     );
 };
 
-export default Profile; 
+export default Profile;

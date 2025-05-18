@@ -12,6 +12,8 @@ const FeedContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.lg};
+  width: 100%;
+  padding: 0;
 `;
 
 const PostCard = styled.div`

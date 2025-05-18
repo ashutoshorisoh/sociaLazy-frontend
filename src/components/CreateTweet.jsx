@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 
@@ -84,7 +84,7 @@ const SubmitButton = styled(motion.button)`
   padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.lg}`};
   background: ${({ theme }) => theme.colors.primary};
   color: white;
-  border-radius: ${({ theme }) => theme.borderRadius.full};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
   border: none;
   font-weight: 600;
   font-size: 1rem;
@@ -105,24 +105,24 @@ const CharCount = styled.span`
   font-size: 0.875rem;
 `;
 
-const CreateTweet = ({ onSubmit }) => {
+const CreateTweet = memo(({ onSubmit }) => {
     const [content, setContent] = useState('');
     const username = localStorage.getItem('username');
 
-    const handleContentChange = (e) => {
+    const handleContentChange = useCallback((e) => {
         if (e.target.value.length <= MAX_LENGTH) {
             setContent(e.target.value);
         }
-    };
+    }, []);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = useCallback((e) => {
         e.preventDefault();
         if (!content.trim()) return;
         if (typeof onSubmit === 'function') {
             onSubmit({ content });
         }
         setContent('');
-    };
+    }, [content, onSubmit]);
 
     return (
         <Card initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
@@ -161,6 +161,6 @@ const CreateTweet = ({ onSubmit }) => {
             </Form>
         </Card>
     );
-};
+});
 
 export default CreateTweet; 

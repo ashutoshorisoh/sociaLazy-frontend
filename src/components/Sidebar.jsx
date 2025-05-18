@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import styled from 'styled-components';
@@ -243,34 +243,35 @@ const NavItemContainer = styled.div`
   align-items: center;
 `;
 
-const Sidebar = () => {
+const Sidebar = memo(() => {
     const location = useLocation();
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
 
-    useEffect(() => {
-        const fetchUnreadCount = async () => {
-            try {
-                const response = await notificationService.getNotifications(1);
-                if (response && response.data && response.data.notifications) {
-                    const unread = response.data.notifications.filter(n => !n.read).length;
-                    setUnreadCount(unread);
-                }
-            } catch (error) {
-                console.error('Failed to fetch unread notifications:', error);
-            }
-        };
-
-        fetchUnreadCount();
-        // Set up polling every 30 seconds
-        const interval = setInterval(fetchUnreadCount, 30000);
-
-        return () => clearInterval(interval);
+    const fetchUnreadCount = useCallback(async () => {
+        try {
+            const count = await notificationService.getUnreadCount();
+            setUnreadCount(count);
+        } catch (error) {
+            setUnreadCount(0);
+        }
     }, []);
 
-    const isActive = (path) => {
+    useEffect(() => {
+        fetchUnreadCount();
+    }, [fetchUnreadCount]);
+
+    const isActive = useCallback((path) => {
         return location.pathname === path;
-    };
+    }, [location.pathname]);
+
+    const handleLogout = useCallback(() => {
+        localStorage.clear();
+        window.location.href = '/login';
+    }, []);
+
+    const handleDrawerOpen = useCallback(() => setIsDrawerOpen(true), []);
+    const handleDrawerClose = useCallback(() => setIsDrawerOpen(false), []);
 
     const navItems = [
         {
@@ -314,13 +315,6 @@ const Sidebar = () => {
         },
     ];
 
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userId');
-        localStorage.removeItem('username');
-        window.location.href = '/login';
-    };
-
     return (
         <>
             {/* Desktop Sidebar */}
@@ -361,7 +355,7 @@ const Sidebar = () => {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            onClick={() => setIsDrawerOpen(false)}
+                            onClick={handleDrawerClose}
                         />
                         <DrawerContent
                             initial={{ x: -280 }}
@@ -378,7 +372,7 @@ const Sidebar = () => {
                                         key={item.path}
                                         to={item.path}
                                         active={isActive(item.path) ? 1 : 0}
-                                        onClick={() => setIsDrawerOpen(false)}
+                                        onClick={handleDrawerClose}
                                     >
                                         {item.icon}
                                         <span>{item.label}</span>
@@ -419,6 +413,6 @@ const Sidebar = () => {
             </MobileBottomNav>
         </>
     );
-};
+});
 
 export default Sidebar;

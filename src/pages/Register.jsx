@@ -138,6 +138,17 @@ const ErrorMessage = styled.div`
   margin-top: ${({ theme }) => theme.spacing.sm};
 `;
 
+const Logo = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
+  
+  img {
+    height: 60px;
+    width: auto;
+  }
+`;
+
 const Register = () => {
     const [formData, setFormData] = useState({
         username: '',
@@ -186,6 +197,9 @@ const Register = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
             >
+                <Logo>
+                    <img src="/socialazy-logo.svg" alt="sociaLazy" />
+                </Logo>
                 <Title>Create Account</Title>
                 <Subtitle>Join sociaLazy and start sharing</Subtitle>
 

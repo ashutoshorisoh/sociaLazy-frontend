@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import styled from 'styled-components';
 import { useLocation } from 'react-router-dom';
 
@@ -7,37 +7,41 @@ const Container = styled.div`
   min-height: 100vh;
   background: ${({ theme }) => theme.colors.background};
   position: relative;
+  justify-content: center;
+  padding-top: 10px;
+    @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    padding-top: 0;
+    margin-top: -10px; /* or -5px or -10px, adjust as you like */
+  }
 `;
 
 const MainContent = styled.main`
-  flex: 1;
+  flex: 1 1 600px;
+  max-width: 600px;
+  min-width: 0;
   padding: 0 ${({ theme }) => theme.spacing.md};
-  padding-top: 30px;
   padding-bottom: calc(${({ theme }) => theme.spacing.lg} + 80px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   min-height: 100vh;
   width: 100%;
-  max-width: 600px;
-   margin: 0 auto;
 
-  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
-    padding: 0 ${({ theme }) => theme.spacing.lg};
-    padding-top: 0;
-    padding-bottom: ${({ theme }) => theme.spacing.lg};
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    padding: 0 ${({ theme }) => theme.spacing.xs};
+    padding-bottom: calc(${({ theme }) => theme.spacing.lg} + 80px);
+    max-width: 100%;
+    
   }
 `;
 
 const SidebarContainer = styled.div`
+  width: 280px;
   display: none;
 
   @media (min-width: 1024px) {
     display: block;
-    position: sticky;
-    top: 80px;
-    height: calc(100vh - 80px);
+    height: calc(100vh - 64px);
     overflow: hidden;
-    width: 280px;
   }
 `;
 
@@ -89,7 +93,7 @@ const MobileBottomNav = styled.nav`
   }
 `;
 
-const Layout = ({ children, leftSidebar, rightSidebar }) => {
+const Layout = memo(({ children, leftSidebar, rightSidebar }) => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
 
@@ -116,6 +120,6 @@ const Layout = ({ children, leftSidebar, rightSidebar }) => {
       </MobileBottomNav>
     </Container>
   );
-};
+});
 
 export default Layout; 

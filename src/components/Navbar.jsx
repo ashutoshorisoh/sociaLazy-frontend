@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import styled from 'styled-components';
@@ -13,15 +13,25 @@ const Nav = styled.nav`
   backdrop-filter: blur(10px);
   border-bottom: 1px solid ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'};
   z-index: 1000;
-  padding: ${({ theme }) => theme.spacing.md};
+  padding: 0;
 `;
 
 const NavContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0;
+`;
+
+const NavLinksRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.lg};
+
+  @media (max-width: 1024px) {
+    gap: ${({ theme }) => theme.spacing.md};
+  }
 `;
 
 const Logo = styled(Link)`
@@ -126,10 +136,14 @@ const MenuIcon = styled.div`
   justify-content: center;
 `;
 
-const Navbar = () => {
+const Navbar = memo(() => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { theme, toggleTheme } = useTheme();
     const location = useLocation();
+
+    const handleMenuOpen = useCallback(() => setIsMenuOpen(true), []);
+    const handleMenuClose = useCallback(() => setIsMenuOpen(false), []);
+    const handleThemeToggle = useCallback(() => toggleTheme(), [toggleTheme]);
 
     const menuItems = [
         {
@@ -174,8 +188,33 @@ const Navbar = () => {
         <Nav>
             <NavContainer>
                 <Logo to="/">sociaLazy</Logo>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <ThemeToggleButton onClick={toggleTheme}>
+                <NavLinksRow>
+                    {menuItems.map((item) => (
+                        <MenuItem
+                            key={item.path}
+                            to={item.path}
+                            className={location.pathname === item.path ? 'active' : ''}
+                        >
+                            <MenuIcon>{item.icon}</MenuIcon>
+                            {item.label}
+                        </MenuItem>
+                    ))}
+                    <div className="hidden lg:block">
+                        <ThemeToggleButton onClick={handleThemeToggle}>
+                            {theme.mode === 'dark' ? (
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                            ) : (
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                                </svg>
+                            )}
+                        </ThemeToggleButton>
+                    </div>
+                </NavLinksRow>
+                <div className="flex lg:hidden" style={{ alignItems: 'center' }}>
+                    <ThemeToggleButton onClick={handleThemeToggle}>
                         {theme.mode === 'dark' ? (
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -186,7 +225,7 @@ const Navbar = () => {
                             </svg>
                         )}
                     </ThemeToggleButton>
-                    <MobileMenuButton onClick={() => setIsMenuOpen(true)}>
+                    <MobileMenuButton onClick={handleMenuOpen}>
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
@@ -204,7 +243,7 @@ const Navbar = () => {
                     >
                         <MenuHeader>
                             <MenuTitle>Menu</MenuTitle>
-                            <MobileMenuButton onClick={() => setIsMenuOpen(false)}>
+                            <MobileMenuButton onClick={handleMenuClose}>
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
@@ -216,7 +255,7 @@ const Navbar = () => {
                                 key={item.path}
                                 to={item.path}
                                 className={location.pathname === item.path ? 'active' : ''}
-                                onClick={() => setIsMenuOpen(false)}
+                                onClick={handleMenuClose}
                             >
                                 <MenuIcon>{item.icon}</MenuIcon>
                                 {item.label}
@@ -227,6 +266,6 @@ const Navbar = () => {
             </AnimatePresence>
         </Nav>
     );
-};
+});
 
 export default Navbar; 

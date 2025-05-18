@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
@@ -78,7 +78,7 @@ const FollowButton = styled.button`
   font-size: 0.95rem;
   font-weight: 500;
   border: none;
-  border-radius: 999px;
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
   background: ${({ theme, isFollowing }) => isFollowing ? theme.colors.secondary : theme.colors.primary};
   color: #fff;
   cursor: pointer;
@@ -100,7 +100,7 @@ const FollowButton = styled.button`
   }
 `;
 
-const CardSinglePost = ({ tweet, hideFollowButton = false }) => {
+const CardSinglePost = memo(({ tweet, hideFollowButton = false }) => {
     const navigate = useNavigate();
     const [isLiked, setIsLiked] = useState(false);
     const [likesCount, setLikesCount] = useState(0);
@@ -123,23 +123,24 @@ const CardSinglePost = ({ tweet, hideFollowButton = false }) => {
         }
     }, [tweet, currentUserId]);
 
-    useEffect(() => {
-        const fetchComments = async () => {
-            if (tweet && tweet._id) {
-                setIsLoadingComments(true);
-                try {
-                    console.log('Fetching comments for', tweet._id);
-                    const response = await posts.getPostComments(tweet._id);
-                    setComments(response.data || []);
-                } catch (err) {
-                    setComments([]);
-                } finally {
-                    setIsLoadingComments(false);
-                }
+    const fetchComments = useCallback(async () => {
+        if (tweet && tweet._id) {
+            setIsLoadingComments(true);
+            try {
+                console.log('Fetching comments for', tweet._id);
+                const response = await posts.getPostComments(tweet._id);
+                setComments(response.data || []);
+            } catch (err) {
+                setComments([]);
+            } finally {
+                setIsLoadingComments(false);
             }
-        };
-        fetchComments();
+        }
     }, [tweet]);
+
+    useEffect(() => {
+        fetchComments();
+    }, [fetchComments]);
 
     const handleLike = useCallback(async (e) => {
         if (e) {
@@ -167,7 +168,6 @@ const CardSinglePost = ({ tweet, hideFollowButton = false }) => {
     }, [tweet, isLiked, isLiking]);
 
     const handleDoubleTap = useCallback((e) => {
-        // Don't call preventDefault on touch events
         const now = Date.now();
         const DOUBLE_TAP_DELAY = 300;
         if (now - lastTapTime.current < DOUBLE_TAP_DELAY) {
@@ -182,7 +182,7 @@ const CardSinglePost = ({ tweet, hideFollowButton = false }) => {
         }
     }, [isLiked, isLiking, handleLike]);
 
-    const handleFollowToggle = async (e) => {
+    const handleFollowToggle = useCallback(async (e) => {
         e.stopPropagation();
         if (isOwnTweet) return;
         try {
@@ -201,9 +201,9 @@ const CardSinglePost = ({ tweet, hideFollowButton = false }) => {
         } finally {
             setIsLoadingFollow(false);
         }
-    };
+    }, [isOwnTweet, isFollowing, tweet.user._id, setFollowState]);
 
-    const handleAddComment = async (content) => {
+    const handleAddComment = useCallback(async (content) => {
         try {
             const response = await posts.addComment(tweet._id, content);
             let newComment = response.data;
@@ -214,24 +214,13 @@ const CardSinglePost = ({ tweet, hideFollowButton = false }) => {
                     _id: localStorage.getItem('userId') || '',
                 };
             }
-            // Always re-fetch comments after adding
-            if (tweet && tweet._id) {
-                setIsLoadingComments(true);
-                try {
-                    const res = await posts.getPostComments(tweet._id);
-                    setComments(res.data || []);
-                } catch (err) {
-                    setComments([]);
-                } finally {
-                    setIsLoadingComments(false);
-                }
-            }
+            await fetchComments();
         } catch (error) {
             // Silent error handling
         }
-    };
+    }, [tweet._id, fetchComments]);
 
-    const handleLikeComment = async (commentId) => {
+    const handleLikeComment = useCallback(async (commentId) => {
         try {
             const response = await posts.likeComment(commentId);
             setComments(prev =>
@@ -244,7 +233,7 @@ const CardSinglePost = ({ tweet, hideFollowButton = false }) => {
         } catch (error) {
             // Silent error handling
         }
-    };
+    }, []);
 
     if (!tweet || !tweet._id) return null;
 
@@ -352,6 +341,6 @@ const CardSinglePost = ({ tweet, hideFollowButton = false }) => {
             </div>
         </TweetContainer>
     );
-};
+});
 
 export default CardSinglePost; 
