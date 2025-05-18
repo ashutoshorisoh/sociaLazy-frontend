@@ -270,6 +270,15 @@ const TweetCard = memo(({ tweet, hideFollowButton = false, showComments = false,
         });
     }, [tweet._id, handleInteraction]);
 
+    const handleTweetClick = useCallback((e) => {
+        if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') {
+            return;
+        }
+        if (!isMobileOrTablet) {
+            navigate(`/post/${tweet._id}`);
+        }
+    }, [navigate, tweet._id, isMobileOrTablet]);
+
     const handleDoubleTap = useCallback((e) => {
         const now = Date.now();
         const DOUBLE_TAP_DELAY = 300;
@@ -355,13 +364,6 @@ const TweetCard = memo(({ tweet, hideFollowButton = false, showComments = false,
             console.error('Error liking comment:', error);
         }
     }, [currentUserId]);
-
-    const handleTweetClick = useCallback((e) => {
-        if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') {
-            return;
-        }
-        navigate(`/post/${tweet._id}`);
-    }, [navigate, tweet._id]);
 
     return (
         <>
