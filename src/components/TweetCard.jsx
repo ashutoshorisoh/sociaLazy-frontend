@@ -282,6 +282,9 @@ const TweetCard = memo(({ tweet, hideFollowButton = false, showComments = false,
     const handleDoubleTap = useCallback((e) => {
         const now = Date.now();
         const DOUBLE_TAP_DELAY = 300;
+        
+        e.preventDefault();
+        
         if (now - lastTapTime.current < DOUBLE_TAP_DELAY) {
             if (!isLiked && !isLiking) {
                 handleLike();
