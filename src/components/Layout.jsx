@@ -8,29 +8,26 @@ const Container = styled.div`
   background: ${({ theme }) => theme.colors.background};
   position: relative;
   justify-content: center;
-  padding-top: 25px;
-    @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
-    padding-top: 0;
-    margin-top: -3px; /* or -5px or -10px, adjust as you like */
-  }
+  padding: 0;
+  margin: 0;
+  width: 100%;
 `;
 
 const MainContent = styled.main`
   flex: 1 1 600px;
   max-width: 600px;
   min-width: 0;
-  padding: 0 ${({ theme }) => theme.spacing.md};
-  padding-bottom: calc(${({ theme }) => theme.spacing.lg} + 80px);
+  padding: 0;
+  margin: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   min-height: 100vh;
   width: 100%;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    padding: 0 ${({ theme }) => theme.spacing.xs};
-    padding-bottom: calc(${({ theme }) => theme.spacing.lg} + 80px);
+    padding: 0;
+    margin: 0;
     max-width: 100%;
-    
   }
 `;
 

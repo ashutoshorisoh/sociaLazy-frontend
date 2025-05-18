@@ -6,25 +6,26 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 
 const Nav = styled.nav`
-  background: ${({ theme }) => theme.mode === 'dark' ? 'rgba(18, 18, 18, 0.95)' : 'rgba(255, 255, 255, 0.95)'};
-  backdrop-filter: blur(10px);
-  padding: ${({ theme }) => theme.spacing.md};
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000;
-  box-shadow: ${({ theme }) => theme.shadows.md};
+  background: ${({ theme }) => theme.mode === 'dark' ? 'rgba(18, 18, 18, 0.95)' : 'rgba(255, 255, 255, 0.95)'};
+  backdrop-filter: blur(10px);
   border-bottom: 1px solid ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'};
+  z-index: 1000;
+  padding: 0;
+  margin: 0;
+  width: 100%;
 `;
 
 const NavContainer = styled.div`
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 ${({ theme }) => theme.spacing.md};
+  padding: 0;
+  margin: 0;
 `;
 
 const Logo = styled(Link)`

@@ -20,6 +20,10 @@ const ProfileContainer = styled.div`
   gap: ${({ theme }) => theme.spacing.lg};
   width: 100%;
   padding: 0;
+  background: ${({ theme }) => theme.colors.background};
+  min-height: 100vh;
+  margin: 0;
+  border: none;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     gap: ${({ theme }) => theme.spacing.md};
@@ -170,6 +174,7 @@ const LoadingContainer = styled.div`
   align-items: center;
   min-height: 100vh;
   background: ${({ theme }) => theme.colors.background};
+  width: 100%;
 `;
 
 const LoadingSpinner = styled.div`
@@ -194,6 +199,7 @@ const ErrorContainer = styled.div`
   background: ${({ theme }) => theme.colors.background};
   color: ${({ theme }) => theme.colors.error};
   font-size: 1.1rem;
+  width: 100%;
 `;
 
 const FollowButton = styled.button`
@@ -582,6 +588,7 @@ const Profile = () => {
         <Layout
             leftSidebar={<Sidebar title="Navigation" links={sidebarLinks} />}
             rightSidebar={<TrendingPosts posts={trendingPosts} />}
+            style={{ background: 'inherit', margin: 0, padding: 0 }}
         >
             <ProfileContainer>
                 <ProfileHeader>
@@ -667,7 +674,7 @@ const Profile = () => {
                         </Stat>
                     </Stats>
                 </ProfileHeader>
-                <div className="space-y-4">
+                <div className="space-y-4" style={{ margin: 0, padding: 0 }}>
                     {isOwnProfile && (
                         <CreateTweet onSubmit={handleNewTweet} />
                     )}

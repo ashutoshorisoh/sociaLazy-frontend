@@ -13,6 +13,10 @@ import { useAuth } from '../context/AuthContext';
 const NotificationsContainer = styled.div`
   width: 100%;
   padding: 0;
+  background: ${({ theme }) => theme.colors.background};
+  min-height: 100vh;
+  margin: 0;
+  border: none;
 
   @media (max-width: 768px) {
     padding: 0;
@@ -165,6 +169,12 @@ const EmptyState = styled.div`
   text-align: center;
   padding: ${({ theme }) => theme.spacing.xl};
   color: ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'};
+  background: ${({ theme }) => theme.colors.background};
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 `;
 
 const EmptyStateTitle = styled.h2`
@@ -347,10 +357,13 @@ const Notifications = () => {
             <Layout
                 leftSidebar={<Sidebar title="Navigation" links={sidebarLinks} />}
                 rightSidebar={<TrendingPosts posts={trendingPosts} />}
+                style={{ background: 'inherit', margin: 0, padding: 0 }}
             >
-                <div className="flex justify-center items-center h-screen">
-                    <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                </div>
+                <NotificationsContainer>
+                    <div className="flex justify-center items-center h-screen">
+                        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                </NotificationsContainer>
             </Layout>
         );
     }
@@ -360,6 +373,7 @@ const Notifications = () => {
             <Layout
                 leftSidebar={<Sidebar title="Navigation" links={sidebarLinks} />}
                 rightSidebar={<TrendingPosts posts={trendingPosts} />}
+                style={{ background: 'inherit', margin: 0, padding: 0 }}
             >
                 <NotificationsContainer>
                     <EmptyState>
@@ -378,8 +392,11 @@ const Notifications = () => {
             <Layout
                 leftSidebar={<Sidebar title="Navigation" links={sidebarLinks} />}
                 rightSidebar={<TrendingPosts posts={trendingPosts} />}
+                style={{ background: 'inherit', margin: 0, padding: 0 }}
             >
-                <div className="text-red-500 text-center">{error}</div>
+                <NotificationsContainer>
+                    <div className="text-red-500 text-center">{error}</div>
+                </NotificationsContainer>
             </Layout>
         );
     }
@@ -390,6 +407,7 @@ const Notifications = () => {
         <Layout
             leftSidebar={<Sidebar title="Navigation" links={sidebarLinks} />}
             rightSidebar={<TrendingPosts posts={trendingPosts} />}
+            style={{ background: 'inherit', margin: 0, padding: 0 }}
         >
             <NotificationsContainer>
                 {notifications.length === 0 ? (
