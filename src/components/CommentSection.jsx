@@ -5,6 +5,8 @@ import { ChatBubbleLeftIcon, HeartIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { posts } from '../services/api';
 import styled from 'styled-components';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const CommentInput = styled.input`
     flex: 1;
@@ -87,11 +89,17 @@ const CommentSection = memo(({ postId, comments: initialComments = [], onComment
     const [newComment, setNewComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const currentUserId = localStorage.getItem('userId');
+    const { isAuthenticated } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
 
     const handleSubmitComment = useCallback(async (e) => {
         e.preventDefault();
+        if (!isAuthenticated) {
+            navigate('/login', { state: { from: location.pathname } });
+            return;
+        }
         if (!newComment.trim() || isSubmitting) return;
-
         try {
             setIsSubmitting(true);
             const response = await posts.addComment(postId, newComment);
@@ -106,9 +114,13 @@ const CommentSection = memo(({ postId, comments: initialComments = [], onComment
         } finally {
             setIsSubmitting(false);
         }
-    }, [postId, newComment, isSubmitting, onCommentAdded]);
+    }, [postId, newComment, isSubmitting, onCommentAdded, isAuthenticated, navigate, location.pathname]);
 
     const handleLikeComment = useCallback(async (commentId) => {
+        if (!isAuthenticated) {
+            navigate('/login', { state: { from: location.pathname } });
+            return;
+        }
         try {
             const response = await posts.likeComment(commentId);
             setComments(prevComments =>
@@ -121,7 +133,7 @@ const CommentSection = memo(({ postId, comments: initialComments = [], onComment
         } catch (error) {
             console.error('Error liking comment:', error);
         }
-    }, []);
+    }, [isAuthenticated, navigate, location.pathname]);
 
     const handleCommentChange = useCallback((e) => {
         setNewComment(e.target.value);

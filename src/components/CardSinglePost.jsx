@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
-import { HeartIcon, ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
+import { HeartIcon, ChatBubbleLeftIcon, ShareIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import { posts, users } from '../services/api';
 import CommentSectionSinglePost from './CommentSectionSinglePost';
@@ -10,6 +10,7 @@ import styled from 'styled-components';
 import { useRecoilState } from 'recoil';
 import { followState } from '../context/followState';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 const HeartOverlay = styled(motion.div)`
   position: absolute;
@@ -100,8 +101,33 @@ const FollowButton = styled.button`
   }
 `;
 
+const ShareButton = styled.button`
+  color: ${({ theme }) => theme.colors.textSecondary};
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  transition: ${({ theme }) => theme.transitions.default};
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    color: #10B981;
+  }
+`;
+
+const ShareMessage = styled.span`
+  color: #10B981;
+  font-size: 0.875rem;
+  margin-left: ${({ theme }) => theme.spacing.xs};
+  opacity: ${({ show }) => show ? 1 : 0};
+  transition: opacity 0.2s ease;
+`;
+
 const CardSinglePost = memo(({ tweet, hideFollowButton = false }) => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const { isAuthenticated } = useAuth();
     const [isLiked, setIsLiked] = useState(false);
     const [likesCount, setLikesCount] = useState(0);
     const [comments, setComments] = useState([]);
@@ -113,6 +139,7 @@ const CardSinglePost = memo(({ tweet, hideFollowButton = false }) => {
     const currentUserId = localStorage.getItem('userId');
     const isOwnTweet = tweet && tweet.user._id === currentUserId;
     const lastTapTime = useRef(0);
+    const [showShareMessage, setShowShareMessage] = useState(false);
 
     const isFollowing = tweet ? (followStateValue[tweet.user._id] || false) : false;
 
@@ -147,6 +174,10 @@ const CardSinglePost = memo(({ tweet, hideFollowButton = false }) => {
             e.preventDefault();
             e.stopPropagation();
         }
+        if (!isAuthenticated) {
+            navigate('/login', { state: { from: location.pathname } });
+            return;
+        }
         if (isLiking) return;
         try {
             setIsLiking(true);
@@ -165,7 +196,7 @@ const CardSinglePost = memo(({ tweet, hideFollowButton = false }) => {
         } finally {
             setTimeout(() => setIsLiking(false), 1000);
         }
-    }, [tweet, isLiked, isLiking]);
+    }, [tweet, isLiked, isLiking, isAuthenticated, navigate, location.pathname]);
 
     const handleDoubleTap = useCallback((e) => {
         const now = Date.now();
@@ -185,6 +216,10 @@ const CardSinglePost = memo(({ tweet, hideFollowButton = false }) => {
     const handleFollowToggle = useCallback(async (e) => {
         e.stopPropagation();
         if (isOwnTweet) return;
+        if (!isAuthenticated) {
+            navigate('/login', { state: { from: location.pathname } });
+            return;
+        }
         try {
             setIsLoadingFollow(true);
             if (isFollowing) {
@@ -201,9 +236,13 @@ const CardSinglePost = memo(({ tweet, hideFollowButton = false }) => {
         } finally {
             setIsLoadingFollow(false);
         }
-    }, [isOwnTweet, isFollowing, tweet.user._id, setFollowState]);
+    }, [isOwnTweet, isFollowing, tweet.user._id, setFollowState, isAuthenticated, navigate, location.pathname]);
 
     const handleAddComment = useCallback(async (content) => {
+        if (!isAuthenticated) {
+            navigate('/login', { state: { from: location.pathname } });
+            return;
+        }
         try {
             const response = await posts.addComment(tweet._id, content);
             let newComment = response.data;
@@ -218,7 +257,7 @@ const CardSinglePost = memo(({ tweet, hideFollowButton = false }) => {
         } catch (error) {
             // Silent error handling
         }
-    }, [tweet._id, fetchComments]);
+    }, [tweet._id, fetchComments, isAuthenticated, navigate, location.pathname]);
 
     const handleLikeComment = useCallback(async (commentId) => {
         try {
@@ -234,6 +273,21 @@ const CardSinglePost = memo(({ tweet, hideFollowButton = false }) => {
             // Silent error handling
         }
     }, []);
+
+    const handleShare = useCallback(async (e) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        try {
+            const shareUrl = `${window.location.origin}/post/${tweet._id}`;
+            await navigator.clipboard.writeText(shareUrl);
+            setShowShareMessage(true);
+            setTimeout(() => setShowShareMessage(false), 2000);
+        } catch (error) {
+            // Silent error handling
+        }
+    }, [tweet._id]);
 
     if (!tweet || !tweet._id) return null;
 
@@ -329,6 +383,13 @@ const CardSinglePost = memo(({ tweet, hideFollowButton = false }) => {
                             <ChatBubbleLeftIcon className="h-5 w-5" />
                             <span>{tweet.comments.length}</span>
                         </ActionButton>
+                        <ShareButton
+                            onClick={handleShare}
+                            type="button"
+                        >
+                            <ShareIcon className="h-5 w-5" />
+                            <ShareMessage show={showShareMessage}>Post link copied!</ShareMessage>
+                        </ShareButton>
                     </div>
                     <CommentSectionSinglePost
                         postId={tweet._id}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import Layout from '../components/Layout';
 import Sidebar from '../components/Sidebar';
@@ -10,6 +10,8 @@ import { motion } from 'framer-motion';
 import CreateTweet from '../components/CreateTweet';
 import { useRecoilState } from 'recoil';
 import { followState } from '../context/followState';
+import { ShareIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '../context/AuthContext';
 
 const ProfileContainer = styled.div`
   display: flex;
@@ -55,7 +57,6 @@ const UserInfoContainer = styled.div`
 const UserActionsRow = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: ${({ theme }) => theme.spacing.md};
   margin-bottom: ${({ theme }) => theme.spacing.sm};
 `;
@@ -193,9 +194,35 @@ const FollowButton = styled.button`
   }
 `;
 
+const ShareButton = styled.button`
+  color: ${({ theme }) => theme.colors.textSecondary};
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  transition: ${({ theme }) => theme.transitions.default};
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+
+  &:hover {
+    color: #10B981;
+  }
+`;
+
+const ShareMessage = styled.span`
+  color: #10B981;
+  font-size: 0.875rem;
+  margin-left: ${({ theme }) => theme.spacing.xs};
+  opacity: ${({ show }) => show ? 1 : 0};
+  transition: opacity 0.2s ease;
+`;
+
 const Profile = () => {
     const { userId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const { isAuthenticated } = useAuth();
     const loggedInUserId = localStorage.getItem('userId');
     const isOwnProfile = userId === 'me' || !userId;
     const idToFetch = isOwnProfile ? loggedInUserId : userId;
@@ -205,6 +232,7 @@ const Profile = () => {
     const [error, setError] = useState(null);
     const [isLoadingFollow, setIsLoadingFollow] = useState(false);
     const [followStateValue, setFollowState] = useRecoilState(followState);
+    const [showShareMessage, setShowShareMessage] = useState(false);
 
     const isFollowing = profile ? followStateValue[profile._id] || false : false;
 
@@ -220,16 +248,22 @@ const Profile = () => {
 
                 let response;
                 if (isOwnProfile) {
+                    if (!isAuthenticated) {
+                        navigate('/login', { state: { from: location.pathname } });
+                        return;
+                    }
                     response = await auth.getCurrentUserProfile();
                 } else {
                     response = await users.getProfile(idToFetch);
                     // Check following status for other users' profiles
-                    const followingResponse = await users.checkFollowing(idToFetch);
-                    if (followingResponse.data) {
-                        setFollowState(prev => ({
-                            ...prev,
-                            [idToFetch]: followingResponse.data.isFollowing
-                        }));
+                    if (isAuthenticated) {
+                        const followingResponse = await users.checkFollowing(idToFetch);
+                        if (followingResponse.data) {
+                            setFollowState(prev => ({
+                                ...prev,
+                                [idToFetch]: followingResponse.data.isFollowing
+                            }));
+                        }
                     }
                 }
 
@@ -239,8 +273,8 @@ const Profile = () => {
                 setProfile(response.data.user);
                 setUserTweets(response.data.posts || []);
             } catch (error) {
-                if (error.response?.status === 401) {
-                    navigate('/login');
+                if (error.response?.status === 401 && isOwnProfile) {
+                    navigate('/login', { state: { from: location.pathname } });
                 } else {
                     setError(error.response?.data?.message || error.message || 'Failed to load user profile');
                 }
@@ -250,11 +284,14 @@ const Profile = () => {
         };
 
         fetchUserData();
-    }, [idToFetch, navigate, isOwnProfile, setFollowState]);
+    }, [idToFetch, navigate, isOwnProfile, setFollowState, isAuthenticated, location.pathname]);
 
     const handleFollowToggle = async () => {
         if (!profile || isOwnProfile) return;
-        
+        if (!isAuthenticated) {
+            navigate('/login', { state: { from: location.pathname } });
+            return;
+        }
         try {
             setIsLoadingFollow(true);
             if (isFollowing) {
@@ -262,14 +299,10 @@ const Profile = () => {
             } else {
                 await users.follow(profile._id);
             }
-            
-            // Update Recoil state
             setFollowState(prev => ({
                 ...prev,
                 [profile._id]: !isFollowing
             }));
-
-            // Update the followers array in the profile
             setProfile(prev => ({
                 ...prev,
                 followers: isFollowing
@@ -404,6 +437,18 @@ const Profile = () => {
                                         )}
                                     </FollowButton>
                                 )}
+                                <ShareButton
+                                    onClick={() => {
+                                        const shareUrl = `${window.location.origin}/profile/${isOwnProfile ? 'me' : profile?._id}`;
+                                        navigator.clipboard.writeText(shareUrl);
+                                        setShowShareMessage(true);
+                                        setTimeout(() => setShowShareMessage(false), 2000);
+                                    }}
+                                    type="button"
+                                >
+                                    <ShareIcon className="h-5 w-5" />
+                                    <ShareMessage show={showShareMessage}>Profile link copied!</ShareMessage>
+                                </ShareButton>
                             </UserActionsRow>
                             <Bio>{profile?.bio || 'No bio yet'}</Bio>
                         </UserInfoContainer>

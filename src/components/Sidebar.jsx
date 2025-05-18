@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import styled from 'styled-components';
 import { notificationService } from '../services/notificationService';
+import { useAuth } from '../context/AuthContext';
 
 const DrawerOverlay = styled(motion.div)`
   position: fixed;
@@ -243,10 +244,48 @@ const NavItemContainer = styled.div`
   align-items: center;
 `;
 
+const LoginButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.md};
+  color: ${({ theme }) => theme.mode === 'dark' ? '#FF4B2B' : '#B91C1C'};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  transition: ${({ theme }) => theme.transitions.default};
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-weight: 600;
+
+  &:hover {
+    background: ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,75,43,0.08)' : 'rgba(185,28,28,0.08)'};
+    color: ${({ theme }) => theme.mode === 'dark' ? '#FF4B2B' : '#B91C1C'};
+  }
+`;
+
+const MobileLoginButton = styled(LoginButton)`
+  flex-direction: column;
+  font-size: 0.75rem;
+  justify-content: center;
+  align-items: center;
+  padding: ${({ theme }) => theme.spacing.sm};
+  width: auto;
+`;
+
+const LoginIcon = (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 12H9m0 0l3-3m-3 3l3 3" />
+  </svg>
+);
+
 const Sidebar = memo(() => {
     const location = useLocation();
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const { isAuthenticated, logout } = useAuth();
 
     const fetchUnreadCount = useCallback(async () => {
         try {
@@ -266,9 +305,9 @@ const Sidebar = memo(() => {
     }, [location.pathname]);
 
     const handleLogout = useCallback(() => {
-        localStorage.clear();
+        logout();
         window.location.href = '/login';
-    }, []);
+    }, [logout]);
 
     const handleDrawerOpen = useCallback(() => setIsDrawerOpen(true), []);
     const handleDrawerClose = useCallback(() => setIsDrawerOpen(false), []);
@@ -338,12 +377,19 @@ const Sidebar = memo(() => {
                             </NavItem>
                         </motion.div>
                     ))}
-                    <LogoutButton onClick={handleLogout}>
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        <span>Logout</span>
-                    </LogoutButton>
+                    {isAuthenticated ? (
+                        <LogoutButton onClick={handleLogout}>
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            <span>Logout</span>
+                        </LogoutButton>
+                    ) : (
+                        <LoginButton as={Link} to="/login">
+                            {LoginIcon}
+                            <span>Login</span>
+                        </LoginButton>
+                    )}
                 </nav>
             </motion.aside>
 
@@ -378,12 +424,19 @@ const Sidebar = memo(() => {
                                         <span>{item.label}</span>
                                     </NavItem>
                                 ))}
-                                <LogoutButton onClick={handleLogout}>
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                    </svg>
-                                    <span>Logout</span>
-                                </LogoutButton>
+                                {isAuthenticated ? (
+                                    <LogoutButton onClick={handleLogout}>
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                        </svg>
+                                        <span>Logout</span>
+                                    </LogoutButton>
+                                ) : (
+                                    <LoginButton as={Link} to="/login">
+                                        {LoginIcon}
+                                        <span>Login</span>
+                                    </LoginButton>
+                                )}
                             </nav>
                         </DrawerContent>
                     </>
@@ -403,12 +456,19 @@ const Sidebar = memo(() => {
                             <span>{item.label}</span>
                         </MobileNavItem>
                     ))}
-                    <MobileLogoutButton onClick={handleLogout}>
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        <span>Logout</span>
-                    </MobileLogoutButton>
+                    {isAuthenticated ? (
+                        <MobileLogoutButton onClick={handleLogout}>
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            <span>Logout</span>
+                        </MobileLogoutButton>
+                    ) : (
+                        <MobileLoginButton as={Link} to="/login">
+                            {LoginIcon}
+                            <span>Login</span>
+                        </MobileLoginButton>
+                    )}
                 </div>
             </MobileBottomNav>
         </>

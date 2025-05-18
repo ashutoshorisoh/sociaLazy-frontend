@@ -28,17 +28,36 @@ const LoginCard = styled(motion.div)`
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   border: 1px solid ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'};
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: ${({ theme }) => theme.spacing.xl};
+  padding: ${({ theme }) => theme.spacing.lg};
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.2rem;
   align-items: stretch;
   justify-content: center;
   margin: auto;
   box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+
+  /* Add logo as background */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('/socialazy-logo.svg') center center no-repeat;
+    background-size: 60% auto;
+    opacity: 0.07;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
 
   @media (max-width: 480px) {
-    padding: ${({ theme }) => theme.spacing.lg};
+    padding: ${({ theme }) => theme.spacing.md};
     border-radius: ${({ theme }) => theme.borderRadius.md};
     box-shadow: none;
   }
@@ -49,13 +68,13 @@ const Title = styled.h1`
   font-weight: 700;
   color: ${({ theme }) => theme.colors.primary};
   text-align: center;
-  margin-bottom: ${({ theme }) => theme.spacing.md};
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
 `;
 
 const Subtitle = styled.p`
   text-align: center;
   color: ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'};
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
 `;
 
 const Form = styled.form`
@@ -139,17 +158,6 @@ const ErrorMessage = styled.div`
   margin-top: ${({ theme }) => theme.spacing.sm};
 `;
 
-const Logo = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
-  
-  img {
-    height: 60px;
-    width: auto;
-  }
-`;
-
 const Login = () => {
     const [formData, setFormData] = useState({
         identifier: '',
@@ -198,9 +206,6 @@ const Login = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
             >
-                <Logo>
-                    <img src="/socialazy-logo.svg" alt="sociaLazy" />
-                </Logo>
                 <Title>Welcome Back</Title>
                 <Subtitle>Sign in to continue to sociaLazy</Subtitle>
 

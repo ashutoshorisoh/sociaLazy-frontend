@@ -105,7 +105,7 @@ const AppRoutes = memo(() => {
     return (
         <ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
             <GlobalStyle isProfileRoute={isProfileRoute} />
-            {isAuthenticated && <Navigation />}
+            {!isAuthPage && <Navigation />}
             {isAuthPage ? (
                 <AuthContent>
                     <Routes>
@@ -116,62 +116,17 @@ const AppRoutes = memo(() => {
             ) : (
                 <MainContent>
                     <Routes>
-                        <Route
-                            path="/"
-                            element={
-                                <PrivateRoute>
-                                    <Home />
-                                </PrivateRoute>
-                            }
-                        />
-                        <Route
-                            path="/explore"
-                            element={
-                                <PrivateRoute>
-                                    <Explore />
-                                </PrivateRoute>
-                            }
-                        />
-                        <Route
-                            path="/profile/me"
-                            element={
-                                <PrivateRoute>
-                                    <Profile />
-                                </PrivateRoute>
-                            }
-                        />
-                        <Route
-                            path="/profile/:userId"
-                            element={
-                                <PrivateRoute>
-                                    <Profile />
-                                </PrivateRoute>
-                            }
-                        />
-                        <Route
-                            path="/profile"
-                            element={
-                                <PrivateRoute>
-                                    <Navigate to="/profile/me" replace />
-                                </PrivateRoute>
-                            }
-                        />
-                        <Route
-                            path="/notifications"
-                            element={
-                                <PrivateRoute>
-                                    <Notifications />
-                                </PrivateRoute>
-                            }
-                        />
-                        <Route
-                            path="/post/:postId"
-                            element={
-                                <PrivateRoute>
-                                    <SinglePost />
-                                </PrivateRoute>
-                            }
-                        />
+                        <Route path="/" element={<Home />} />
+                        <Route path="/explore" element={<Explore />} />
+                        <Route path="/profile/me" element={
+                            <PrivateRoute>
+                                <Profile />
+                            </PrivateRoute>
+                        } />
+                        <Route path="/profile/:userId" element={<Profile />} />
+                        <Route path="/profile" element={<Navigate to="/profile/me" replace />} />
+                        <Route path="/notifications" element={<Notifications />} />
+                        <Route path="/post/:postId" element={<SinglePost />} />
                     </Routes>
                 </MainContent>
             )}

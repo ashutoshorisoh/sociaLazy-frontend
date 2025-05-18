@@ -1,8 +1,9 @@
 import React, { useState, useCallback, memo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import ThemeToggle from './ThemeToggle';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 const Nav = styled.nav`
   background: ${({ theme }) => theme.mode === 'dark' ? 'rgba(18, 18, 18, 0.95)' : 'rgba(255, 255, 255, 0.95)'};
@@ -126,6 +127,8 @@ const Navigation = memo(() => {
   const location = useLocation();
   const { isDarkMode } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
 
   const toggleMenu = useCallback(() => {
     setIsMenuOpen(prev => !prev);
@@ -134,6 +137,11 @@ const Navigation = memo(() => {
   const handleNavLinkClick = useCallback(() => {
     setIsMenuOpen(false);
   }, []);
+
+  const handleLogout = useCallback(() => {
+    logout();
+    navigate('/login');
+  }, [logout, navigate]);
 
   return (
     <Nav>
@@ -176,6 +184,15 @@ const Navigation = memo(() => {
           >
             Profile
           </NavLink>
+          {isAuthenticated ? (
+            <NavLink as="button" onClick={handleLogout} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+              Logout
+            </NavLink>
+          ) : (
+            <NavLink to="/login" active={location.pathname === '/login' ? 1 : 0} onClick={handleNavLinkClick}>
+              Login
+            </NavLink>
+          )}
           <DesktopThemeToggle>
             <ThemeToggle />
           </DesktopThemeToggle>

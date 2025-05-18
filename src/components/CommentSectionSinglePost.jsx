@@ -5,6 +5,8 @@ import { ChatBubbleLeftIcon, HeartIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import styled from 'styled-components';
 import { posts } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const CommentCard = styled(motion.div)`
     margin-bottom: 0.75rem;
@@ -92,6 +94,9 @@ const CommentSectionSinglePost = memo(({ postId, comments = [], onLikeComment, o
     const [comment, setComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const currentUserId = localStorage.getItem('userId');
+    const { isAuthenticated } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
 
     const handleCommentChange = useCallback((e) => {
         setComment(e.target.value);
@@ -99,8 +104,11 @@ const CommentSectionSinglePost = memo(({ postId, comments = [], onLikeComment, o
 
     const handleSubmitComment = useCallback(async (e) => {
         e.preventDefault();
+        if (!isAuthenticated) {
+            navigate('/login', { state: { from: location.pathname } });
+            return;
+        }
         if (!comment.trim() || isSubmitting) return;
-
         setIsSubmitting(true);
         try {
             const response = await posts.addComment(postId, comment);
@@ -115,7 +123,15 @@ const CommentSectionSinglePost = memo(({ postId, comments = [], onLikeComment, o
         } finally {
             setIsSubmitting(false);
         }
-    }, [comment, postId, onCommentAdded, isSubmitting]);
+    }, [comment, postId, onCommentAdded, isSubmitting, isAuthenticated, navigate, location.pathname]);
+
+    const handleLikeComment = useCallback((commentId) => {
+        if (!isAuthenticated) {
+            navigate('/login', { state: { from: location.pathname } });
+            return;
+        }
+        onLikeComment && onLikeComment(commentId);
+    }, [isAuthenticated, navigate, location.pathname, onLikeComment]);
 
     return (
         <div className="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
@@ -154,9 +170,7 @@ const CommentSectionSinglePost = memo(({ postId, comments = [], onLikeComment, o
                                 <CommentContent>{comment.content}</CommentContent>
                                 <div className="mt-2 flex items-center gap-4">
                                     <LikeButton
-                                        onClick={() => {
-                                            onLikeComment && onLikeComment(comment._id)
-                                        }}
+                                        onClick={() => handleLikeComment(comment._id)}
                                     >
                                         {comment.likes?.includes(currentUserId) ? (
                                             <HeartSolidIcon className="h-5 w-5 text-red-500" />
