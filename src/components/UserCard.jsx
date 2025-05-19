@@ -12,7 +12,6 @@ const Card = styled(motion.div)`
   transition: ${({ theme }) => theme.transitions.default};
   background: ${({ theme }) => theme.mode === 'dark' ? '#1E1E1E' : '#F8F9FA'};
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  margin-bottom: ${({ theme }) => theme.spacing.md};
   cursor: pointer;
 
   &:hover {

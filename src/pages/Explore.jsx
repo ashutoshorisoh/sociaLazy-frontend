@@ -35,16 +35,19 @@ const SearchInput = styled.input`
   padding: ${({ theme }) => theme.spacing.md};
   padding-left: 40px;
   border-radius: ${({ theme }) => theme.borderRadius.full};
-  border: 1px solid ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
-  background: ${({ theme }) => theme.mode === 'dark' ? 'rgba(26, 26, 26, 0.8)' : 'rgba(247, 247, 247, 0.8)'};
+  border: 1px solid ${({ theme }) =>
+    theme.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
+  background: ${({ theme }) =>
+    theme.mode === 'dark' ? 'rgba(26, 26, 26, 0.8)' : 'rgba(247, 247, 247, 0.8)'};
   backdrop-filter: blur(10px);
   color: ${({ theme }) => theme.colors.text};
   font-size: 1rem;
+  height: 48px; /* <-- Set fixed height */
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    padding: ${({ theme }) => theme.spacing.sm};
-    padding-left: 36px;
-    font-size: 0.875rem;
+    padding: 0.75rem 1rem 0.75rem 36px; /* Slightly larger vertical padding */
+    font-size: 1rem; /* Keep consistent with desktop */
+    height: 44px; /* Slightly smaller but still tall */
   }
 
   &:focus {
@@ -52,6 +55,7 @@ const SearchInput = styled.input`
     border-color: ${({ theme }) => theme.colors.primary};
   }
 `;
+
 
 const SearchIcon = styled.div`
   position: absolute;
@@ -188,6 +192,12 @@ const Explore = () => {
         }
     ];
 
+    // Filter users whose username starts with the search query (case-insensitive)
+    const trimmedQuery = searchQuery.trim().toLowerCase();
+    const filteredUsers = searchResults.users.filter(user =>
+        trimmedQuery && user.username.toLowerCase().startsWith(trimmedQuery)
+    );
+
     if (loading) {
         return (
             <Layout
@@ -238,16 +248,17 @@ const Explore = () => {
                         <>
                             {searchQuery ? (
                                 <>
-                                    {searchResults.users.length > 0 && (
-                                        <div className="mb-6">
-                                            <SectionTitle>Users</SectionTitle>
-                                            <div className="space-y-2">
-                                                {searchResults.users.map((user) => (
-                                                    <UserCard key={user._id} user={user} />
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
+                                    {filteredUsers.length > 0 && (
+  <div className="mb-6">
+    <SectionTitle className="mb-2">Users</SectionTitle>
+    <div className="space-y-2">
+      {filteredUsers.map((user) => (
+        <UserCard key={user._id} user={user} />
+      ))}
+    </div>
+  </div>
+)}
+
 
                                     {searchResults.posts.length > 0 && (
                                         <div>
@@ -265,7 +276,7 @@ const Explore = () => {
                                         </div>
                                     )}
 
-                                    {!isLoading && searchResults.posts.length === 0 && searchResults.users.length === 0 && (
+                                    {!isLoading && searchQuery && filteredUsers.length === 0 && searchResults.posts.length === 0 && (
                                         <motion.div
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}

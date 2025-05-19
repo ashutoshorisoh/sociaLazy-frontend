@@ -24,9 +24,16 @@ const NavContainer = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0;
+  padding-top: 8px;
+  padding-bottom: 8px;
   margin: 0;
+
+  @media (min-width: 768px) {
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
 `;
+
 
 const Logo = styled(Link)`
   display: flex;
@@ -78,6 +85,8 @@ const NavLink = styled(Link)`
   border-radius: ${({ theme }) => theme.borderRadius.md};
   transition: ${({ theme }) => theme.transitions.default};
   font-size: 1rem;
+    margin-right: 0.9rem;
+
   
   &:hover {
     background: ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'};
@@ -99,6 +108,7 @@ const MenuButton = styled.button`
   font-size: 1.5rem;
   cursor: pointer;
   padding: ${({ theme }) => theme.spacing.sm};
+  margin-right: 0.5rem;
   
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     display: block;
@@ -157,6 +167,9 @@ const Navigation = memo(() => {
           </MenuButton>
         </MobileControls>
         <NavLinks isOpen={isMenuOpen}>
+          <DesktopThemeToggle>
+            <ThemeToggle />
+          </DesktopThemeToggle>
           <NavLink
             to="/"
             active={location.pathname === '/' ? 1 : 0}
@@ -194,9 +207,6 @@ const Navigation = memo(() => {
               Login
             </NavLink>
           )}
-          <DesktopThemeToggle>
-            <ThemeToggle />
-          </DesktopThemeToggle>
         </NavLinks>
       </NavContainer>
     </Nav>

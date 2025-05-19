@@ -73,6 +73,12 @@ const Search = () => {
         }
     };
 
+    // Filter users whose username starts with the search query (case-insensitive)
+    const trimmedQuery = query.trim().toLowerCase();
+    const filteredUsers = searchResults.users.filter(user =>
+        trimmedQuery && user.username.toLowerCase().startsWith(trimmedQuery)
+    );
+
     return (
         <div className="max-w-2xl mx-auto p-4">
             <div className="relative mb-6">
@@ -81,7 +87,7 @@ const Search = () => {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Search posts and users..."
-                    className="w-full rounded-full border border-gray-300 py-2 pl-10 pr-4 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-full border border-gray-300 py-4 pl-10 pr-4 focus:border-blue-500 focus:outline-none text-base"
                 />
                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 {isLoading && (
@@ -103,38 +109,22 @@ const Search = () => {
                     </motion.div>
                 ) : (
                     <>
-                        {searchResults.posts.length > 0 && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                className="mb-8"
-                            >
-                                <h2 className="text-xl font-bold mb-4">Posts</h2>
-                                <div className="space-y-4">
-                                    {searchResults.posts.map((post) => (
-                                        <TweetCard key={post._id} post={post} />
-                                    ))}
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {searchResults.users.length > 0 && (
+                        {filteredUsers.length > 0 && (
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -20 }}
                             >
-                                <h2 className="text-xl font-bold mb-4">Users</h2>
-                                <div className="space-y-4">
-                                    {searchResults.users.map((user) => (
+                                <h2 className="text-xl font-bold m-0">Users</h2>
+                                <div className="flex flex-col gap-4 mt-2">
+                                    {filteredUsers.map((user) => (
                                         <UserCard key={user._id} user={user} />
                                     ))}
                                 </div>
                             </motion.div>
                         )}
 
-                        {!isLoading && query && searchResults.posts.length === 0 && searchResults.users.length === 0 && (
+                        {!isLoading && query && filteredUsers.length === 0 && searchResults.posts.length === 0 && (
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}

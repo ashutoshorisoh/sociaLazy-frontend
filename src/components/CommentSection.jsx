@@ -234,9 +234,7 @@ const CommentSection = memo(({ postId, comments: initialComments = [], onComment
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-2">
                                         <CommentUsername>{comment.user?.username || 'User'}</CommentUsername>
-                                        <CommentTimestamp>
-                                            {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
-                                        </CommentTimestamp>
+                                       
                                     </div>
                                     {comment.user?._id === currentUserId && (
                                         <DeleteButton
@@ -250,6 +248,9 @@ const CommentSection = memo(({ postId, comments: initialComments = [], onComment
                                         </DeleteButton>
                                     )}
                                 </div>
+                                <CommentTimestamp>
+                                            {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                                        </CommentTimestamp>
                                 <CommentContent>{comment.content}</CommentContent>
                                 <div className="mt-2 flex items-center gap-4">
                                     <LikeButton

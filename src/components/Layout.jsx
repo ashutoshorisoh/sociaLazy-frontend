@@ -11,6 +11,7 @@ const Container = styled.div`
   padding: 0;
   margin: 0;
   width: 100%;
+  gap: 10px;
 `;
 
 const MainContent = styled.main`
@@ -25,11 +26,11 @@ const MainContent = styled.main`
   width: 100%;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    padding: 0;
-    margin: 0;
+    padding-bottom: 85px; /* 👈 add padding to clear space for MobileBottomNav */
     max-width: 100%;
   }
 `;
+
 
 const SidebarContainer = styled.div`
   width: 280px;

@@ -11,17 +11,23 @@ const Nav = styled.nav`
   right: 0;
   background: ${({ theme }) => theme.mode === 'dark' ? 'rgba(18, 18, 18, 0.95)' : 'rgba(255, 255, 255, 0.95)'};
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'};
+  border-bottom: 1px solid ${({ theme }) => theme.mode === 'dark' ? 'rgba(36, 31, 31, 0.1)' : 'rgba(0,0,0,0.05)'};
   z-index: 1000;
-  padding: 0;
+  padding: 1rem 0;
 `;
 
 const NavContainer = styled.div`
   width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0;
+  padding: 0 1.5rem;
+  
+  @media (max-width: 640px) {
+    padding: 0 1rem;
+  }
 `;
 
 const NavLinksRow = styled.div`
@@ -92,6 +98,7 @@ const MobileMenu = styled(motion.div)`
   padding: ${({ theme }) => theme.spacing.lg};
   display: flex;
   flex-direction: column;
+
 `;
 
 const MenuHeader = styled.div`
@@ -189,16 +196,6 @@ const Navbar = memo(() => {
             <NavContainer>
                 <Logo to="/">sociaLazy</Logo>
                 <NavLinksRow>
-                    {menuItems.map((item) => (
-                        <MenuItem
-                            key={item.path}
-                            to={item.path}
-                            className={location.pathname === item.path ? 'active' : ''}
-                        >
-                            <MenuIcon>{item.icon}</MenuIcon>
-                            {item.label}
-                        </MenuItem>
-                    ))}
                     <div className="hidden lg:block">
                         <ThemeToggleButton onClick={handleThemeToggle}>
                             {theme.mode === 'dark' ? (
@@ -212,6 +209,16 @@ const Navbar = memo(() => {
                             )}
                         </ThemeToggleButton>
                     </div>
+                    {menuItems.map((item) => (
+                        <MenuItem
+                            key={item.path}
+                            to={item.path}
+                            className={location.pathname === item.path ? 'active' : ''}
+                        >
+                            <MenuIcon>{item.icon}</MenuIcon>
+                            {item.label}
+                        </MenuItem>
+                    ))}
                 </NavLinksRow>
                 <div className="flex lg:hidden" style={{ alignItems: 'center' }}>
                     <ThemeToggleButton onClick={handleThemeToggle}>

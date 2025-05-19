@@ -67,7 +67,7 @@ const TrendingPosts = memo(() => {
     return (
         <TrendingContainer>
             <Title>Developer Wisdom</Title>
-            
+                                                                                
             <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-3 text-blue-500">💡 Inspiring Quote</h3>
                 {quotes.map((quote, index) => (
